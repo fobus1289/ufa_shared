@@ -43,8 +43,7 @@ func (c connectionConfig) build() string {
      user=%s 
      password=%s 
      dbname=%s 
-     %s
-    `,
+     %s`,
 		c.host,
 		c.port,
 		c.user,
