@@ -105,3 +105,5 @@ func (s *jwtService) generateNewRefreshToken(user Payload[IUser]) (string, error
 
 	return token.Raw, nil
 }
+
+func unused() {}
