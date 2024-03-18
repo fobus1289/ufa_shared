@@ -2,6 +2,7 @@ package jwtService
 
 import (
 	"github.com/fobus1289/ufa_shared/redis"
+	"github.com/fobus1289/ufa_shared/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
@@ -19,7 +20,7 @@ type TokenMetadata struct {
 }
 
 type UserPayload struct {
-	ID   string
+	ID   int64
 	Role string
 }
 
@@ -74,7 +75,7 @@ func (s *jwtService) generateNewAccessToken(user UserPayload) (string, error) {
 		TokenMetadata{
 			Role: user.Role,
 			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        user.ID,
+				ID:        utils.Int64ToString(user.ID),
 				Issuer:    s.config.SecretKey,
 				ExpiresAt: jwt.NewNumericDate(now.Add(time.Second * time.Duration(s.config.SecretKeyExpireSeconds))),
 				NotBefore: jwt.NewNumericDate(time.Now()),
@@ -93,7 +94,7 @@ func (s *jwtService) generateNewRefreshToken(user UserPayload) (string, error) {
 		TokenMetadata{
 			Role: user.Role,
 			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        user.ID,
+				ID:        utils.Int64ToString(user.ID),
 				Issuer:    s.config.SecretKey,
 				ExpiresAt: jwt.NewNumericDate(now.Add(time.Minute * time.Duration(s.config.RefreshKeyExpireMinutes))),
 				NotBefore: jwt.NewNumericDate(time.Now()),

@@ -3,14 +3,15 @@ package redis
 import (
 	"context"
 	pkgConfig "github.com/fobus1289/ufa_shared/config"
+	"github.com/fobus1289/ufa_shared/utils"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
 
 type RedisService interface {
-	SetWithTTL(key string, value interface{}, timeOut time.Duration) error
-	Set(key string, value interface{}) error
-	Get(key string) interface{}
+	SetWithTTL(key int64, value interface{}, timeOut time.Duration) error
+	Set(key int64, value interface{}) error
+	Get(key int64) interface{}
 }
 
 type redisService struct {
@@ -38,18 +39,18 @@ func connect(config *config) *redis.Client {
 	return rdb
 }
 
-func (s *redisService) SetWithTTL(key string, value interface{}, timeOut time.Duration) error {
-	err := s.redisClient.Set(context.Background(), key, value, timeOut).Err()
+func (s *redisService) SetWithTTL(key int64, value interface{}, timeOut time.Duration) error {
+	err := s.redisClient.Set(context.Background(), utils.Int64ToString(key), value, timeOut).Err()
 	return err
 }
 
-func (s *redisService) Set(key string, value interface{}) error {
+func (s *redisService) Set(key int64, value interface{}) error {
 	err := s.SetWithTTL(key, value, 0)
 	return err
 }
 
-func (s *redisService) Get(key string) interface{} {
-	val, err := s.redisClient.Get(context.Background(), key).Result()
+func (s *redisService) Get(key int64) interface{} {
+	val, err := s.redisClient.Get(context.Background(), utils.Int64ToString(key)).Result()
 	if err != nil {
 		panic(err)
 	}
