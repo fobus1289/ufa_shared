@@ -26,7 +26,7 @@ func (m *AuthMiddleware) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if accessToken == "" {
 			return echo.NewHTTPError(401, UnAuthorized)
 		}
-		_, err := m.jwtService.ExtractTokenMetadata(accessToken)
+		_, err := m.jwtService.ParseToken(accessToken)
 		if err != nil {
 			return echo.NewHTTPError(401, UnAuthorized)
 		}
