@@ -86,23 +86,3 @@ func (s *jwtService) generateNewAccessToken(user Payload[IUser]) (string, error)
 
 	return tokenString, nil
 }
-
-func (s *jwtService) generateNewRefreshToken(user Payload[IUser]) (string, error) {
-	now := time.Now()
-
-	token := jwt.NewWithClaims(
-		jwt.SigningMethodHS256,
-		TokenMetadata{
-			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        utils.Int64ToString(user.ID()),
-				Issuer:    s.config.SecretKey,
-				ExpiresAt: jwt.NewNumericDate(now.Add(time.Minute * time.Duration(s.config.RefreshKeyExpireMinutes))),
-				NotBefore: jwt.NewNumericDate(time.Now()),
-			},
-		},
-	)
-
-	return token.Raw, nil
-}
-
-func unused() {}
