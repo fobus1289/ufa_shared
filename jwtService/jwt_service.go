@@ -1,6 +1,7 @@
 package jwtService
 
 import (
+	"errors"
 	"github.com/fobus1289/ufa_shared/redis"
 	"github.com/fobus1289/ufa_shared/utils"
 	"github.com/golang-jwt/jwt/v5"
@@ -27,6 +28,7 @@ type Payload[T IUser] struct {
 }
 
 type JwtService interface {
+	ParseTokenWithExpTime(string) (TokenMetadata, error)
 	ParseToken(string) (TokenMetadata, error)
 	GenerateNewTokens(Payload[IUser]) (string, error)
 }
@@ -42,17 +44,37 @@ func NewJwtService(config *JwtConfig) JwtService {
 	}
 }
 
-func (s *jwtService) ParseToken(token string) (TokenMetadata, error) {
-	var claims TokenMetadata
-	_, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.config.SecretKey), nil
-	})
-
+func (s *jwtService) ParseToken(tokenString string) (TokenMetadata, error) {
+	token, err := s.parseToken(tokenString)
 	if err != nil {
 		return TokenMetadata{}, err
 	}
 
-	return claims, nil
+	return token.Claims.(TokenMetadata), nil
+}
+
+func (s *jwtService) ParseTokenWithExpTime(tokenString string) (TokenMetadata, error) {
+	token, err := s.parseToken(tokenString)
+	if err != nil {
+		return TokenMetadata{}, err
+	}
+
+	if !token.Valid {
+		return TokenMetadata{}, errors.New("token is not valid")
+
+	}
+
+	return token.Claims.(TokenMetadata), nil
+}
+
+func (s *jwtService) parseToken(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.config.SecretKey), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }
 
 func (s *jwtService) GenerateNewTokens(payload Payload[IUser]) (string, error) {
