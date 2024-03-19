@@ -11,14 +11,14 @@ type Paginate struct{ page, perpage int }
 func NewPaginate(page, perPage string) *Paginate {
 	return &Paginate{
 		page:    transformPage(page),
-		perpage: transformPage(perPage),
+		perpage: transformPerPage(perPage),
 	}
 }
 
 func NewPaginateEchoWithContext(ctx echo.Context) *Paginate {
 	return &Paginate{
 		page:    transformPage(ctx.QueryParam("page")),
-		perpage: transformPage(ctx.QueryParam("perpage")),
+		perpage: transformPerPage(ctx.QueryParam("perpage")),
 	}
 }
 
