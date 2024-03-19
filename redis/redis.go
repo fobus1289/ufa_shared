@@ -11,7 +11,7 @@ import (
 type RedisService interface {
 	SetWithTTL(key int64, value interface{}, timeOut time.Duration) error
 	Set(key int64, value interface{}) error
-	Get(key int64) interface{}
+	Get(key int64) (interface{}, error)
 }
 
 type redisService struct {
@@ -53,11 +53,11 @@ func (s *redisService) Set(key int64, value interface{}) error {
 	return err
 }
 
-func (s *redisService) Get(key int64) interface{} {
+func (s *redisService) Get(key int64) (interface{}, error) {
 	val, err := s.redisClient.Get(context.Background(), utils.Int64ToString(key)).Result()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return val
+	return val, nil
 }
