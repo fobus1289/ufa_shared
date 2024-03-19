@@ -40,7 +40,6 @@ func connect(config *config) *redis.Client {
 }
 
 func (s *redisService) SetWithTTL(key int64, value interface{}, timeOut time.Duration) error {
-	// todo: checking for error
 	status := s.redisClient.Set(context.Background(), utils.Int64ToString(key), value, timeOut)
 	if status.Err() != nil {
 		return status.Err()
