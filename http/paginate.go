@@ -31,11 +31,11 @@ func (p *Paginate) PerPage() int {
 }
 
 func (p *Paginate) Take() int {
-	return p.perpage * p.page
+	return p.perpage
 }
 
 func (p *Paginate) Skip() int {
-	return p.page
+	return p.perpage * p.page
 }
 
 func transformPerPage(perPage string) int {
