@@ -16,11 +16,9 @@ import (
 	"time"
 )
 
-var noSuchFileError = errors.New("no such file")
-
 func newNoSuchFile() *file {
 	return &file{
-		error: noSuchFileError,
+		error: errors.New("no such file"),
 	}
 }
 
