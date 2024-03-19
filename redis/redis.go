@@ -40,8 +40,11 @@ func connect(config *config) *redis.Client {
 }
 
 func (s *redisService) SetWithTTL(key int64, value interface{}, timeOut time.Duration) error {
-	err := s.redisClient.Set(context.Background(), utils.Int64ToString(key), value, timeOut).Err()
-	return err
+	status := s.redisClient.Set(context.Background(), utils.Int64ToString(key), value, timeOut)
+	if status.Err() != nil {
+		return status.Err()
+	}
+	return nil
 }
 
 func (s *redisService) Set(key int64, value interface{}) error {
