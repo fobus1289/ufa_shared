@@ -61,10 +61,10 @@ func (s *jwtService) GenerateNewTokens(payload Payload[IUser]) (string, error) {
 		return "", err
 	}
 
-	err = s.redisService.SetWithTTL(payload.ID(), accessToken, time.Minute*time.Duration(s.config.RefreshKeyExpireMinutes))
-	if err != nil {
-		return "", err
-	}
+	//err = s.redisService.SetWithTTL(payload.ID(), accessToken, time.Minute*time.Duration(s.config.RefreshKeyExpireMinutes))
+	//if err != nil {
+	//	return "", err
+	//}
 
 	return accessToken, nil
 }
