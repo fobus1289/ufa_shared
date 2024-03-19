@@ -61,11 +61,6 @@ func (s *jwtService) GenerateNewTokens(payload Payload[IUser]) (string, error) {
 		return "", err
 	}
 
-	//err = s.redisService.SetWithTTL(payload.ID(), accessToken, time.Minute*time.Duration(s.config.RefreshKeyExpireMinutes))
-	//if err != nil {
-	//	return "", err
-	//}
-
 	return accessToken, nil
 }
 
@@ -78,14 +73,18 @@ func (s *jwtService) generateNewAccessToken(user Payload[IUser]) (string, error)
 			user: user,
 			RegisteredClaims: jwt.RegisteredClaims{
 				ID:        utils.Int64ToString(user.ID()),
-				Issuer:    s.config.SecretKey,
 				ExpiresAt: jwt.NewNumericDate(now.Add(time.Second * time.Duration(s.config.SecretKeyExpireMinutes))),
 				NotBefore: jwt.NewNumericDate(time.Now()),
 			},
 		},
 	)
 
-	return token.Raw, nil
+	tokenString, err := token.SignedString([]byte(s.config.SecretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func (s *jwtService) generateNewRefreshToken(user Payload[IUser]) (string, error) {
