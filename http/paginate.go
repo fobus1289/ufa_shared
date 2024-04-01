@@ -35,7 +35,7 @@ func (p *Paginate) Take() int {
 }
 
 func (p *Paginate) Skip() int {
-	return p.perpage * p.page
+	return p.perpage * (p.page - 1)
 }
 
 func transformPerPage(perPage string) int {
@@ -54,8 +54,8 @@ func transformPerPage(perPage string) int {
 func transformPage(page string) int {
 	value, err := strconv.ParseInt(page, 10, 32)
 	{
-		if err != nil || value < 0 {
-			value = 0
+		if err != nil || value < 1 {
+			value = 1
 		}
 	}
 
