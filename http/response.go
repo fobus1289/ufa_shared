@@ -60,3 +60,9 @@ func (r *response) NotFound(res any) error {
 func (r *response) InternalServerError(res any) error {
 	return r.Send(http.StatusInternalServerError, res)
 }
+
+// Method for sending a response with a 409 Conflict status code
+func (r *response) Conflict(res any) error { return r.Send(http.StatusConflict, res) }
+
+// Method for sending a response with a 501 Not Implemented status code
+func (r *response) NotImplemented() error { return r.Send(http.StatusNotImplemented, nil) }
