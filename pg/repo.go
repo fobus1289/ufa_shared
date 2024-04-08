@@ -209,6 +209,7 @@ type Repository interface {
 	WithTx(rtx RepositoryTx) (RepositoryTx, error)
 	Txx(ctx context.Context, opts *sql.TxOptions) (RepositoryTx, error)
 	WithTxx(ctx context.Context, rtx RepositoryTx, opts *sql.TxOptions) (RepositoryTx, error)
+	DBX() *sqlx.DB
 	Query
 }
 
@@ -268,6 +269,10 @@ func (r *repo) WithTxx(ctx context.Context, rtx RepositoryTx, opts *sql.TxOption
 	rTx := &repoTx{rr}
 
 	return rTx, nil
+}
+
+func (r *repo) DBX() *sqlx.DB {
+	return r.DB
 }
 
 func New(cfg connectionConfig) (Repository, error) {
