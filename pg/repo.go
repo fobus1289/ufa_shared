@@ -204,16 +204,23 @@ type Query interface {
 	SelectContext(ctx context.Context, dest any, query string, args ...any) error
 }
 
-type Repository interface {
-	Tx() (RepositoryTx, error)
+type Transaction interface {
+	Rollback() error
+	Commit() error
+
+	TTx() (RepositoryTx, error)
 	WithTx(rtx RepositoryTx) (RepositoryTx, error)
 	Txx(ctx context.Context, opts *sql.TxOptions) (RepositoryTx, error)
 	WithTxx(ctx context.Context, rtx RepositoryTx, opts *sql.TxOptions) (RepositoryTx, error)
-	DBX() *sqlx.DB
+}
+
+type Repository interface {
+	Transaction
 	Query
 }
 
 type RepositoryTx interface {
+	Transaction
 	Query
 }
 
@@ -225,7 +232,23 @@ type repoTx struct {
 	*sqlx.Tx
 }
 
-func (r *repo) Tx() (RepositoryTx, error) {
+func (r *repoTx) TTx() (RepositoryTx, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *repoTx) WithTx(rtx RepositoryTx) (RepositoryTx, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *repoTx) Txx(ctx context.Context, opts *sql.TxOptions) (RepositoryTx, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *repoTx) WithTxx(ctx context.Context, rtx RepositoryTx, opts *sql.TxOptions) (RepositoryTx, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *repo) TTx() (RepositoryTx, error) {
 	tx, err := r.Beginx()
 	if err != nil {
 		return nil, err
@@ -248,31 +271,40 @@ func (r *repo) Txx(ctx context.Context, opts *sql.TxOptions) (RepositoryTx, erro
 }
 
 func (r *repo) WithTx(rtx RepositoryTx) (RepositoryTx, error) {
-	rr, ok := rtx.(*sqlx.Tx)
+
+	rr, ok := rtx.(*repoTx)
 
 	if !ok {
 		return nil, errors.New("wrong type")
 	}
 
-	rTx := &repoTx{rr}
+	rTx := &repoTx{rr.Tx}
 
 	return rTx, nil
 }
 
 func (r *repo) WithTxx(ctx context.Context, rtx RepositoryTx, opts *sql.TxOptions) (RepositoryTx, error) {
-	rr, ok := rtx.(*sqlx.Tx)
+	rr, ok := rtx.(*repoTx)
 
 	if !ok {
 		return nil, errors.New("wrong type")
 	}
 
-	rTx := &repoTx{rr}
+	rTx := &repoTx{rr.Tx}
 
 	return rTx, nil
 }
 
 func (r *repo) DBX() *sqlx.DB {
 	return r.DB
+}
+
+func (r *repo) Rollback() error {
+	return errors.New("not implemented")
+}
+
+func (r *repo) Commit() error {
+	return errors.New("not implemented")
 }
 
 func New(cfg connectionConfig) (Repository, error) {
