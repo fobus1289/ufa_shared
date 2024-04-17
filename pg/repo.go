@@ -318,13 +318,13 @@ func New(cfg connectionConfig) (Repository, error) {
 	return r, nil
 }
 
-type TransactionFn[T any] func(RepositoryTx) (*T, error)
+type TransactionFn[T any] func(RepositoryTx) (T, error)
 
-func Transact[T any](db Repository, transactionFn TransactionFn[T]) (result *T, err error) {
+func Transact[T any](db Repository, transactionFn TransactionFn[T]) (result T, err error) {
 	tx, err := db.TTx()
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	defer func(err error) {
@@ -343,7 +343,7 @@ func Transact[T any](db Repository, transactionFn TransactionFn[T]) (result *T, 
 	result, err = transactionFn(tx)
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return result, nil
