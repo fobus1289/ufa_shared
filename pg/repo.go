@@ -317,3 +317,34 @@ func New(cfg connectionConfig) (Repository, error) {
 
 	return r, nil
 }
+
+type TransactionFn[T any] func(RepositoryTx) (*T, error)
+
+func Transact[T any](db Repository, transactionFn TransactionFn[T]) (result *T, err error) {
+	tx, err := db.TTx()
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(err error) {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p)
+		}
+
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}(err)
+
+	result, err = transactionFn(tx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
