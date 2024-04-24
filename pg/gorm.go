@@ -9,16 +9,12 @@ type gormInstance struct {
 	*gorm.DB
 }
 
-func (g *gormInstance) clone() *gormInstance {
-	return &gormInstance{DB: g.DB}
-}
-
 var _gormInstance *gormInstance
 
-func NewGorm(c connectionConfig) (*gormInstance, error) {
+func NewGorm(c connectionConfig) (*gorm.DB, error) {
 
 	if _gormInstance != nil {
-		return _gormInstance.clone(), nil
+		return _gormInstance.DB, nil
 	}
 
 	db, err := gorm.Open(postgres.Open(c.build()), &gorm.Config{})
@@ -31,5 +27,5 @@ func NewGorm(c connectionConfig) (*gormInstance, error) {
 		DB: db,
 	}
 
-	return _gormInstance.clone(), nil
+	return _gormInstance.DB, nil
 }
