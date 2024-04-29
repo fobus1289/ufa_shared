@@ -59,7 +59,7 @@ func main() {
 
 	for _, dir := range dirs {
 		buildDir := path.Join(serviceDir, dir)
-		if err := os.MkdirAll(buildDir, os.ModeDir); err != nil {
+		if err := os.MkdirAll(buildDir, 0750); err != nil {
 			log.Fatalln(err)
 		}
 	}
