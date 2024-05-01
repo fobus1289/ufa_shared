@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"text/template"
@@ -103,22 +104,31 @@ func main() {
 	fmt.Printf("%s service created successfully\n", serviceDir)
 	fmt.Printf("cd %s\ngo mod init %s\ngo mod tidy\n", serviceDir, serviceDir)
 
-	//TODO:auto install
-	// if _, err := exec.LookPath("go"); err != nil {
-	// 	fmt.Printf("install golang\n")
-	// 	fmt.Printf("%s_service service created successfully\n", serviceName)
-	// 	fmt.Printf("cd %s_service\ngo mod init %s_service\ngo mod tidy\n", serviceName, serviceName)
-	// } else {
-	// 	cmd := exec.Command("go", "mod", "init", fmt.Sprintf("%s_service", serviceName))
+	if _, err := exec.LookPath("go"); err != nil {
+		fmt.Println("Please install Go.")
+		fmt.Printf("%s_service service created successfully\n", serviceName)
+		fmt.Printf("cd %s_service\ngo mod init %s_service\ngo mod tidy\n", serviceName, serviceName)
+	} else {
+		cmd := exec.Command("go", "mod", "init", fmt.Sprintf("%s_service", serviceName))
+		cmd.Dir = "./" + serviceName + "_service"
+		cmd.Stderr = os.Stderr
 
-	// 	cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("Failed to initialize Go module: %v\n", err)
+		} else {
+			fmt.Printf("%s_service service created successfully\n", serviceName)
 
-	// 	cmd.Path = "./" + serviceName
+			cmd = exec.Command("go", "mod", "tidy")
+			cmd.Dir = "./" + serviceName + "_service"
+			cmd.Stderr = os.Stderr
 
-	// 	cmd.Start()
-	// 	cmd.Wait()
-	// }
-
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Failed to execute go mod tidy: %v\n", err)
+			} else {
+				fmt.Println("Done go mod tidy")
+			}
+		}
+	}
 }
 
 func serviceExists(serviceName string) bool {
