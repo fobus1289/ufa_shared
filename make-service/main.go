@@ -66,15 +66,15 @@ func main() {
 	}
 
 	services := map[string]string{
-		"cmd/main.go":                            stuble.Cmd,
-		"dto/dto.go":                             stuble.Dto,
-		"models/model.go":                        stuble.Model,
-		"service/service.go":                     stuble.Service,
-		"transport/http/transport_http.go":       stuble.TransportHttp,
-		"transport/service/transport_service.go": stuble.TransportService,
-		".gitignore":                             stuble.Gitignore,
-		".env":                                   stuble.Env,
-		"README.md":                              stuble.README,
+		"cmd/main.go":                             stuble.Cmd,
+		fmt.Sprintf("dto/%s.go", serviceName):     stuble.Dto,
+		fmt.Sprintf("models/%s.go", serviceName):  stuble.Model,
+		fmt.Sprintf("service/%s.go", serviceName): stuble.Service,
+		"transport/http/transport_http.go":        stuble.TransportHttp,
+		"transport/service/transport_service.go":  stuble.TransportService,
+		".gitignore":                              stuble.Gitignore,
+		".env":                                    stuble.Env,
+		"README.md":                               stuble.README,
 	}
 
 	for k, v := range services {
