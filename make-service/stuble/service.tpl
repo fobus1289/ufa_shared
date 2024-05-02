@@ -23,7 +23,7 @@ type {{ucFirst $serviceInterface}} interface {
 	FindOne(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModel}}, error)
 	Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error)
 	Page(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModelPaginate}}, error)
-	Create(dto *{{$serviceCreateDto}}) (int64, error)
+	Create({{$serviceLc}} *{{$serviceModel}}) (int64, error)
 	Update(dto *{{$serviceUpdateDto}}, scopes ...ServiceScope) error
 	Delete(scopes ...ServiceScope) error
 }
@@ -41,9 +41,11 @@ func (s *{{$serviceInterface}}) FindOne(ctx context.Context, scopes ...ServiceSc
 
 	var model {{$serviceModel}}
 
-	err := s.db.Model({{$serviceModel}}{}).
+	err := s.db.Model(&{{$serviceModel}}{}).
+	    WithContext(ctx).
 		Scopes(scopes...).
-		First(&model).Error
+		First(&model).
+		Error
 
 	if err != nil {
 		return nil, err
@@ -55,9 +57,11 @@ func (s *{{$serviceInterface}}) FindOne(ctx context.Context, scopes ...ServiceSc
 func (s *{{$serviceInterface}}) Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error) {
 	var moreModels []{{$serviceModel}}
 
-	err := s.db.Model({{$serviceModel}}{}).
+	err := s.db.Model(&{{$serviceModel}}{}).
+	    WithContext(ctx).
 		Scopes(scopes...).
-		Find(&moreModels).Error
+		Find(&moreModels).
+		Error
 
 	if err != nil {
 		return nil, err
@@ -69,50 +73,39 @@ func (s *{{$serviceInterface}}) Find(ctx context.Context, scopes ...ServiceScope
 func (s *{{$serviceInterface}}) Page(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModelPaginate}}, error) {
 
 	var (
-		total int64
-		model []*{{$serviceModel}}
+	    paginate = &{{$serviceModelPaginate}}{}
 	)
 
-	if err := s.db.Scopes(scopes...).Count(&total).Error; err != nil {
-		return nil, err
-	}
-
-	if err := s.db.Scopes(scopes...).Find(&model).Error; err != nil {
-		return nil, err
-	}
-
-	paginate := &{{$serviceModelPaginate}}{
-		Total: int(total),
-		Data:  model,
+	if err := s.db.WithContext(ctx).Scopes(scopes...).Model(&{{$serviceModel}}{}).Count(&paginate.Total).Find(&paginate.Data).Error; err != nil {
+		return paginate, err
 	}
 
 	return paginate, nil
 }
 
-func (s *{{$serviceInterface}}) Create(dto *{{$serviceCreateDto}}) (int64, error) {
+func (s *{{$serviceInterface}}) Create({{$serviceLc}} *{{$serviceModel}}) (int64, error) {
 
-	var id int64
-
-	err := s.db.Model({{$serviceModel}}{}).
-		Select("id").
-		Create(dto).
-		Scan(&id).Error
+	err := s.db.Model(&{{$serviceModel}}{}).
+		Create({{$serviceLc}}).
+		Error
 
 	if err != nil {
 		return 0, nil
 	}
 
-	return id, nil
+	return {{$serviceLc}}.Id, nil
 }
 
 func (s *{{$serviceInterface}}) Update(dto *{{$serviceUpdateDto}}, scopes ...ServiceScope) error {
-	return s.db.Model({{$serviceModel}}{}).
+	return s.db.Model(&{{$serviceModel}}{}).
 		Scopes(scopes...).
-		Updates(dto).Error
+		Updates(dto).
+		Error
 }
 
 func (s *{{$serviceInterface}}) Delete(scopes ...ServiceScope) error {
-	return s.db.Model({{$serviceModel}}{}).
+	return s.db.Model(&{{$serviceModel}}{}).
 		Scopes(scopes...).
-		Delete(nil).Error
+		Delete(nil).
+		Error
 }
