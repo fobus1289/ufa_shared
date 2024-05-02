@@ -53,10 +53,8 @@ func NewHandler(router *echo.Group, service service.{{ucFirst $serviceInterface}
 func (e *{{$handlerName}}) Create(ctx echo.Context) error {
 	var createDto {{$serviceCreateDto}}
 
-	if err := ctx.Validate(&createDto); err != nil {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": err.Error()},
-		)
+	if err := ctx.Bind(&createDto); err != nil {
+		return http.Response(ctx).BadRequest(echo.Map{"message": err.Error()})
 	}
 
 	if err := validator.Validate(createDto); err != nil {
@@ -65,7 +63,7 @@ func (e *{{$handlerName}}) Create(ctx echo.Context) error {
 		)
 	}
 
-	res, err := e.service.Create(&createDto)
+	res, err := e.service.Create(createDto.MarshalToDBModel())
 	if err != nil {
 		return http.Response(ctx).InternalServerError(
 			echo.Map{"error": err.Error()},
@@ -75,7 +73,7 @@ func (e *{{$handlerName}}) Create(ctx echo.Context) error {
 	return http.Response(ctx).Created(res)
 }
 
-// GetAll godoc
+// Page godoc
 // @Summary      GetContent all {{$serviceNameLc}} with pagination
 // @Description  GetContent all {{$serviceNameLc}} with pagination
 // @Tags 		 {{$serviceNameLc}}
