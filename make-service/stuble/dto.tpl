@@ -4,9 +4,9 @@ package dto
 {{ $serviceDto:= printf "%s%s" .ServiceName "Dto" }}
 {{ $serviceDtoUc:=ucFirst $serviceDto }}
 {{ $serviceUc:=ucFirst .ServiceName }}
-{{ $serviceModel := printf "models.%s%s" $serviceUc "Model" }}
+{{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
 
-import "{{ $service }}/models"
+import "{{ $service }}/{{ $serviceLc }}/model"
 
 type Create{{$serviceDtoUc}} struct {
 	Name string `json:"name"`

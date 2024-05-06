@@ -1,10 +1,13 @@
 package main
+
+{{ $serviceNameLc:=lcFirst .ServiceName }}
 {{ $service:= printf "%s%s" .ServiceName "_service" }}
 {{ $serviceUc:=ucFirst $service }}
 {{ $serviceLc:=lcFirst $service }}
 import (
-	"{{$serviceLc}}/service"
-	"{{$serviceLc}}/transport/http"
+    "gorm.io/gorm"
+	{{ $serviceNameLc }}Service "{{$serviceLc}}/{{ $serviceNameLc }}/service"
+    {{ $serviceNameLc }}Handler "{{$serviceLc}}/{{ $serviceNameLc }}/handler"
 
 	pkgConfig "github.com/fobus1289/ufa_shared/config"
 	"github.com/fobus1289/ufa_shared/pg"
@@ -45,10 +48,7 @@ func main() {
 
 	setMiddlewares(router)
 
-	group := router.Group("/api/v1")
-	{
-		http.NewHandler(group, service.NewService(db))
-	}
+	createHandler(router, db)
 
 	runHTTPServerOnAddr(router, pkgConfig.Load(&config{}).Addr)
 }
@@ -64,4 +64,11 @@ func setMiddlewares(router *echo.Echo) {
 	router.Use(middleware.RequestID())
 	router.Use(middleware.Recover())
 	router.Use(middleware.CORS())
+}
+
+func createHandler(router *echo.Echo, db *gorm.DB) {
+	group := router.Group("/api/v1")
+	{
+		{{ $serviceNameLc }}Handler.NewHandler(group, {{ $serviceNameLc }}Service.NewService(db))
+	}
 }

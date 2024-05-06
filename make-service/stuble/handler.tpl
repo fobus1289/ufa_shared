@@ -1,4 +1,4 @@
-package http
+package handler
 {{ $serviceNameLc:=lcFirst .ServiceName }}
 {{ $serviceNameUc:=ucFirst .ServiceName }}
 {{ $service:= printf "%s%s" .ServiceName "_service" }}
@@ -10,8 +10,8 @@ package http
 {{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
 {{ $serviceModel := printf "models.%s%s" $serviceUc "Model" }}
 import (
-	"{{$service}}/dto"
-	"{{$service}}/service"
+	"{{ $service }}/{{ $serviceNameLc }}/dto"
+	"{{ $service }}/{{ $serviceNameLc }}/service"
 
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/http/validator"

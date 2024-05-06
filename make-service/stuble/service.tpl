@@ -4,13 +4,13 @@ package service
 {{ $service:= printf "%s%s" $serviceLc "_service" }}
 {{ $serviceCreateDto:= printf "dto.Create%s%s" $serviceUc "Dto" }}
 {{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
-{{ $serviceModel := printf "models.%s%s" $serviceUc "Model" }}
+{{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
 {{ $serviceModelPaginate := printf "%s%s%s" "Service" $serviceUc "ModelPaginate" }}
 {{ $serviceInterface := printf "%s%s" $serviceLc "Service" }}
 import (
 	"context"
-	"{{$service}}/dto"
-	"{{$service}}/models"
+	"{{ $service }}/{{ $serviceLc }}/dto"
+	"{{ $service }}/{{ $serviceLc }}/model"
 
 	"github.com/fobus1289/ufa_shared/http/response"
 	"gorm.io/gorm"
@@ -39,19 +39,19 @@ func NewService(db *gorm.DB) {{ucFirst $serviceInterface}} {
 
 func (s *{{$serviceInterface}}) FindOne(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModel}}, error) {
 
-	var model {{$serviceModel}}
+	var {{ $serviceLc }} {{$serviceModel}}
 
 	err := s.db.Model(&{{$serviceModel}}{}).
 	    WithContext(ctx).
 		Scopes(scopes...).
-		First(&model).
+		First(&{{ $serviceLc }}).
 		Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &model, nil
+	return &{{ $serviceLc }}, nil
 }
 
 func (s *{{$serviceInterface}}) Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error) {

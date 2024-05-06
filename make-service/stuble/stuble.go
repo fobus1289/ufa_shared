@@ -14,8 +14,8 @@ var Model string
 //go:embed  service.tpl
 var Service string
 
-//go:embed transport_http.tpl
-var TransportHttp string
+//go:embed handler.tpl
+var Handler string
 
 //go:embed transport_service.tpl
 var TransportService string
