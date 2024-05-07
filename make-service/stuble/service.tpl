@@ -9,8 +9,6 @@ package service
 {{ $serviceInterface := printf "%s%s" $serviceLc "Service" }}
 import (
 	"context"
-	"{{ $service }}/{{ $serviceLc }}/dto"
-	"{{ $service }}/{{ $serviceLc }}/model"
 
 	"github.com/fobus1289/ufa_shared/http/response"
 	"gorm.io/gorm"

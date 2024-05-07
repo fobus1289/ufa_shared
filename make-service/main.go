@@ -131,7 +131,10 @@ func AddService(serviceName string) {
 
 	//updateCmdMainFile()
 	//updateTransportHttp()
-	if err := goModTidy(serviceName, "./"+serviceName); err != nil {
+	if err := goModTidy("./" + serviceName); err != nil {
+		log.Fatalln(err)
+	}
+	if err := runGoImports("golang.org/x/tools/cmd/goimports@latest", "./"+serviceName); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -189,7 +192,10 @@ func initProject(serviceName string) error {
 	if err := goModInit(serviceName, "./"+serviceName+"_service"); err != nil {
 		return err
 	}
-	if err := goModTidy(serviceName, "./"+serviceName+"_service"); err != nil {
+	if err := goModTidy("./" + serviceName + "_service"); err != nil {
+		return err
+	}
+	if err := runGoImports("golang.org/x/tools/cmd/goimports@latest", "./"+serviceName+"_service"); err != nil {
 		return err
 	}
 	return nil
@@ -210,7 +216,7 @@ func goModInit(serviceName, dir string) error {
 	return nil
 }
 
-func goModTidy(serviceName, dir string) error {
+func goModTidy(dir string) error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return errors.New("go path not found, please install go")
 	} else {
@@ -224,3 +230,103 @@ func goModTidy(serviceName, dir string) error {
 	}
 	return nil
 }
+
+func runGoImports(packagePath, dir string) error {
+	if _, err := exec.LookPath("go"); err != nil {
+		return errors.New("go path not found, please install go")
+	} else {
+		cmd := exec.Command("go", "install", packagePath)
+		cmd.Dir = dir
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			return errors.New(fmt.Sprintf("Failed to install goimports %v\n", err))
+		}
+	}
+
+	if _, err := exec.LookPath("go"); err != nil {
+		return errors.New("go path not found, please install go")
+	} else {
+		cmd := exec.Command("goimports", "-w", ".")
+		cmd.Dir = dir
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			return errors.New(fmt.Sprintf("Failed to execute goimports: %v\n", err))
+		}
+	}
+
+	return nil
+}
+
+//func fileParser() {
+//	fSet := token.NewFileSet()
+//	parsedFile, err := parser.ParseFile(fSet, "cmd/main.go", nil, parser.ParseComments)
+//	if err != nil {
+//		fmt.Println("Error parsing file:", err)
+//		return
+//	}
+//
+//	// Print the AST
+//	ast.Print(fSet, parsedFile)
+//
+//	// Format the AST and print to stdout
+//	format.Node(os.Stdout, fSet, parsedFile)
+//
+//}
+//
+//func updateMainGoFile() {
+//	fset := token.NewFileSet()
+//	parsedFile, err := parser.ParseFile(fset, "cmd/main.go", nil, parser.ParseComments)
+//	if err != nil {
+//		fmt.Println("Error parsing file:", err)
+//		return
+//	}
+//
+//	// Update functions
+//	updateFunctions(parsedFile)
+//
+//	// Update imports
+//	updateImports(parsedFile)
+//
+//	// Format the updated AST and print to stdout
+//	format.Node(os.Stdout, fset, parsedFile)
+//}
+//
+//func updateCreateHandler(file *ast.File) {
+//
+//	for _, decl := range file.Decls {
+//
+//		funcDecl, ok := decl.(*ast.FuncDecl)
+//		if ok && funcDecl.Name.Name == "createHandler" {
+//			// Iterate through the statements in the function body
+//			for _, stmt := range funcDecl.Body.List {
+//				// Check if the statement is a block (e.g., starting with "{")
+//				blockStmt, ok := stmt.(*ast.BlockStmt)
+//				if ok {
+//					// Create the new line to be added
+//					newLine := `
+//{{ $serviceNameLc }}Handler2.NewHandler(group, {{ $serviceNameLc }}Service2.NewService(db))`
+//
+//					// Parse the new line as a statement
+//					newStmt, err := parser.ParseExpr(strings.TrimSpace(newLine))
+//					if err != nil {
+//						fmt.Println("Error parsing new line:", err)
+//						return
+//					}
+//
+//					// Add the new statement to the block
+//					blockStmt.List = append(blockStmt.List, newStmt)
+//				}
+//			}
+//		}
+//	}
+//}
+//
+//func updateImports(file *ast.File) {
+//	// Iterate through the imports in the file
+//	for _, importSpec := range file.Imports {
+//		// Update import paths or perform other modifications
+//		importSpec.Path.Value = `"updated/import/path"`
+//	}
+//}
