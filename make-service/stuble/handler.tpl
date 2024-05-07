@@ -10,8 +10,6 @@ package handler
 {{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
 {{ $serviceModel := printf "models.%s%s" $serviceUc "Model" }}
 import (
-	"{{ $service }}/{{ $serviceNameLc }}/dto"
-	"{{ $service }}/{{ $serviceNameLc }}/service"
 
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/http/validator"
