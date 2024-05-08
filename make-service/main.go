@@ -5,10 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fobus1289/ufa_shared/make-service/stuble"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -103,7 +108,7 @@ func NewService(serviceName string) {
 
 func AddService(serviceName string) {
 
-	// check serviceName if exists
+	//TODO: check serviceName if exists
 	var dirs = []string{
 		serviceName,
 		fmt.Sprintf("%s/dto", serviceName),
@@ -127,10 +132,18 @@ func AddService(serviceName string) {
 		log.Fatalln(err)
 	}
 
+	//updateCmdMainFile()
+	if err := updateMainGoFile(serviceName); err != nil {
+		log.Fatalln(err)
+	}
+
+	//updateTransportHttp()
+	if err := updateTransportHttpFile(serviceName); err != nil {
+		log.Fatalln(err)
+	}
+
 	fmt.Printf("%s created successfully\n", serviceName)
 
-	//updateCmdMainFile()
-	//updateTransportHttp()
 	if err := goModTidy("./" + serviceName); err != nil {
 		log.Fatalln(err)
 	}
@@ -259,74 +272,138 @@ func runGoImports(packagePath, dir string) error {
 	return nil
 }
 
-//func fileParser() {
-//	fSet := token.NewFileSet()
-//	parsedFile, err := parser.ParseFile(fSet, "cmd/main.go", nil, parser.ParseComments)
-//	if err != nil {
-//		fmt.Println("Error parsing file:", err)
-//		return
-//	}
-//
-//	// Print the AST
-//	ast.Print(fSet, parsedFile)
-//
-//	// Format the AST and print to stdout
-//	format.Node(os.Stdout, fSet, parsedFile)
-//
-//}
-//
-//func updateMainGoFile() {
-//	fset := token.NewFileSet()
-//	parsedFile, err := parser.ParseFile(fset, "cmd/main.go", nil, parser.ParseComments)
-//	if err != nil {
-//		fmt.Println("Error parsing file:", err)
-//		return
-//	}
-//
-//	// Update functions
-//	updateFunctions(parsedFile)
-//
-//	// Update imports
-//	updateImports(parsedFile)
-//
-//	// Format the updated AST and print to stdout
-//	format.Node(os.Stdout, fset, parsedFile)
-//}
-//
-//func updateCreateHandler(file *ast.File) {
-//
-//	for _, decl := range file.Decls {
-//
-//		funcDecl, ok := decl.(*ast.FuncDecl)
-//		if ok && funcDecl.Name.Name == "createHandler" {
-//			// Iterate through the statements in the function body
-//			for _, stmt := range funcDecl.Body.List {
-//				// Check if the statement is a block (e.g., starting with "{")
-//				blockStmt, ok := stmt.(*ast.BlockStmt)
-//				if ok {
-//					// Create the new line to be added
-//					newLine := `
-//{{ $serviceNameLc }}Handler2.NewHandler(group, {{ $serviceNameLc }}Service2.NewService(db))`
-//
-//					// Parse the new line as a statement
-//					newStmt, err := parser.ParseExpr(strings.TrimSpace(newLine))
-//					if err != nil {
-//						fmt.Println("Error parsing new line:", err)
-//						return
-//					}
-//
-//					// Add the new statement to the block
-//					blockStmt.List = append(blockStmt.List, newStmt)
-//				}
-//			}
-//		}
-//	}
-//}
-//
-//func updateImports(file *ast.File) {
-//	// Iterate through the imports in the file
-//	for _, importSpec := range file.Imports {
-//		// Update import paths or perform other modifications
-//		importSpec.Path.Value = `"updated/import/path"`
-//	}
-//}
+func updateMainGoFile(serviceName string) error {
+	fSet := token.NewFileSet()
+	parsedFile, err := parser.ParseFile(fSet, "cmd/main.go", nil, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("error parsing file: %v", err)
+	}
+
+	if err := updateCreateHandler(parsedFile, serviceName); err != nil {
+		return err
+	}
+
+	if err := updateImports(parsedFile, serviceName); err != nil {
+		return err
+	}
+
+	outFile, err := os.Create("cmd/main.go")
+	if err != nil {
+		return fmt.Errorf("error creating output file: %v", err)
+	}
+	defer outFile.Close()
+
+	if err := format.Node(outFile, fSet, parsedFile); err != nil {
+		return fmt.Errorf("error formatting AST: %v", err)
+	}
+
+	return nil
+}
+
+func updateCreateHandler(file *ast.File, serviceName string) error {
+	for _, decl := range file.Decls {
+		funcDecl, ok := decl.(*ast.FuncDecl)
+		if ok && funcDecl.Name.Name == "createHandler" {
+			for _, stmt := range funcDecl.Body.List {
+				blockStmt, ok := stmt.(*ast.BlockStmt)
+				if ok {
+					newLine := fmt.Sprintf("%sHandler.NewHandler(group, %sService.NewService(db))", serviceName, serviceName)
+
+					newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
+					if err != nil {
+						return fmt.Errorf("error parsing new line: %v", err)
+					}
+
+					newStmt := &ast.ExprStmt{X: newExpr}
+
+					blockStmt.List = append(blockStmt.List, newStmt)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func updateImports(file *ast.File, newServiceName string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current working directory: %v", err)
+	}
+	currentPackageName := filepath.Base(cwd)
+
+	var importDecl *ast.GenDecl
+	for _, decl := range file.Decls {
+		if decl, ok := decl.(*ast.GenDecl); ok && decl.Tok == token.IMPORT {
+			importDecl = decl
+			break
+		}
+	}
+
+	if importDecl != nil {
+		import1 := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: fmt.Sprintf("%sHandler \"%s/%s/handler\"", strings.ToLower(newServiceName), currentPackageName, newServiceName),
+			},
+		}
+		import2 := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: fmt.Sprintf("%sService \"%s/%s/service\"", strings.ToLower(newServiceName), currentPackageName, newServiceName),
+			},
+		}
+
+		importDecl.Specs = append(importDecl.Specs, import1, import2)
+	} else {
+		return errors.New("import block not found in the file")
+	}
+
+	return nil
+}
+
+func updateTransportHttpFile(serviceName string) error {
+	fSet := token.NewFileSet()
+	parsedFile, err := parser.ParseFile(fSet, "transport/service/http.go", nil, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("error parsing file: %v", err)
+	}
+
+	if err := updateNewService(parsedFile, serviceName); err != nil {
+		return err
+	}
+
+	if err := updateImports(parsedFile, serviceName); err != nil {
+		return err
+	}
+
+	outFile, err := os.Create("transport/service/http.go")
+	if err != nil {
+		return fmt.Errorf("error creating output file: %v", err)
+	}
+	defer outFile.Close()
+
+	if err := format.Node(outFile, fSet, parsedFile); err != nil {
+		return fmt.Errorf("error formatting AST: %v", err)
+	}
+
+	return nil
+}
+
+func updateNewService(file *ast.File, serviceName string) error {
+	for _, decl := range file.Decls {
+		funcDecl, ok := decl.(*ast.FuncDecl)
+		if ok && funcDecl.Name.Name == "NewService" {
+			newLine := fmt.Sprintf("%sHandler.NewHandler(routerGroup, %sService.NewService(db))", serviceName, serviceName)
+
+			newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
+			if err != nil {
+				return fmt.Errorf("error parsing new line: %v", err)
+			}
+
+			newStmt := &ast.ExprStmt{X: newExpr}
+
+			funcDecl.Body.List = append(funcDecl.Body.List, newStmt)
+		}
+	}
+	return nil
+}
