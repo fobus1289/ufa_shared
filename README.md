@@ -6,8 +6,19 @@
 go install github.com/fobus1289/ufa_shared/make-service@latest
 ```
 
+### Example
+
+- Create new service
 ```cmd
-#example
-make-service user
-#output user_service
+make-service --new user
+
+output: user_service
+``` 
+
+- Add new service into existing service
+```cmd
+cd user_service
+make-service --add author
+
+output: user_service/auth
 ```
