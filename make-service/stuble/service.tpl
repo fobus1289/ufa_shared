@@ -88,7 +88,7 @@ func (s *{{$serviceInterface}}) Create({{$serviceLc}} *{{$serviceModel}}) (int64
 		Error
 
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	return {{$serviceLc}}.Id, nil
