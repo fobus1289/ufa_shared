@@ -8,7 +8,7 @@ package handler
 {{ $serviceUc:=ucFirst $serviceNameUc }}
 {{ $serviceCreateDto:= printf "dto.Create%s%s" $serviceUc "Dto" }}
 {{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
-{{ $serviceModel := printf "models.%s%s" $serviceUc "Model" }}
+{{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
 import (
 
 	"github.com/fobus1289/ufa_shared/http"
@@ -101,7 +101,9 @@ func (e *{{$handlerName}}) Page(ctx echo.Context) error {
 		)
 	}
 
-	return http.Response(ctx).OK(pageData)
+    pageDataResponse := dto.ConvertToPageDataResponse(*pageData)
+
+	return http.Response(ctx).OK(pageDataResponse)
 }
 
 // GetById godoc
@@ -118,6 +120,7 @@ func (e *{{$handlerName}}) Page(ctx echo.Context) error {
 // @Router       /{{$serviceNameLc}}/{id} [get]
 func (e *{{$handlerName}}) GetById(ctx echo.Context) error {
 	var (
+	    {{ $serviceNameLc }}Response dto.{{ $serviceNameUc }}ResponseDto
 		id         int64
 		idStr      = ctx.Param("id")
 		paramValue = http.PathValue(idStr)
@@ -131,7 +134,7 @@ func (e *{{$handlerName}}) GetById(ctx echo.Context) error {
 
 	rCtx := ctx.Request().Context()
 
-	organization, err := e.service.FindOne(rCtx, func(tx *gorm.DB) *gorm.DB {
+	{{ $serviceNameLc }}, err := e.service.FindOne(rCtx, func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("id", id)
 	})
 
@@ -141,7 +144,9 @@ func (e *{{$handlerName}}) GetById(ctx echo.Context) error {
 		)
 	}
 
-	return http.Response(ctx).OK(organization)
+	{{ $serviceNameLc }}Response.MarshalFromDbModel(*{{ $serviceNameLc }})
+
+	return http.Response(ctx).OK({{ $serviceNameLc }}Response)
 }
 
 // Update godoc
@@ -177,7 +182,10 @@ func (e *{{$handlerName}}) Update(ctx echo.Context) error {
 		)
 	}
 
-	err := e.service.Update(&updateDto, func(tx *gorm.DB) *gorm.DB {
+	{{ $serviceNameLc }} := {{ $serviceModel }}{Id: id}
+	updateDto.MarshalToDBModel(&{{ $serviceNameLc }})
+
+	err := e.service.Update(&{{ $serviceNameLc }}, func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("id", id)
 	})
 
@@ -214,7 +222,7 @@ func (e *{{$handlerName}}) Delete(ctx echo.Context) error {
 		)
 	}
 
-	err := e.service.Delete(func(tx *gorm.DB) *gorm.DB {
+	err := e.service.Delete(&{{ $serviceModel }}{Id: id}, func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("id", id)
 	})
 

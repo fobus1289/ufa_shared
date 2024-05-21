@@ -22,8 +22,8 @@ type {{ucFirst $serviceInterface}} interface {
 	Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error)
 	Page(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModelPaginate}}, error)
 	Create({{$serviceLc}} *{{$serviceModel}}) (int64, error)
-	Update(dto *{{$serviceUpdateDto}}, scopes ...ServiceScope) error
-	Delete(scopes ...ServiceScope) error
+	Update({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error
+	Delete({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error
 }
 
 
@@ -83,9 +83,7 @@ func (s *{{$serviceInterface}}) Page(ctx context.Context, scopes ...ServiceScope
 
 func (s *{{$serviceInterface}}) Create({{$serviceLc}} *{{$serviceModel}}) (int64, error) {
 
-	err := s.db.Model(&{{$serviceModel}}{}).
-		Create({{$serviceLc}}).
-		Error
+	err := s.db.Create({{$serviceLc}}).Error
 
 	if err != nil {
 		return 0, err
@@ -94,16 +92,16 @@ func (s *{{$serviceInterface}}) Create({{$serviceLc}} *{{$serviceModel}}) (int64
 	return {{$serviceLc}}.Id, nil
 }
 
-func (s *{{$serviceInterface}}) Update(dto *{{$serviceUpdateDto}}, scopes ...ServiceScope) error {
-	return s.db.Model(&{{$serviceModel}}{}).
+func (s *{{$serviceInterface}}) Update({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error {
+	return s.db.Model({{$serviceLc}}).
 		Scopes(scopes...).
-		Updates(dto).
+		Updates({{$serviceLc}}).
 		Error
 }
 
-func (s *{{$serviceInterface}}) Delete(scopes ...ServiceScope) error {
-	return s.db.Model(&{{$serviceModel}}{}).
+func (s *{{$serviceInterface}}) Delete({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error {
+	return s.db.Model({{$serviceLc}}).
 		Scopes(scopes...).
-		Delete(nil).
+		Delete(&{{$serviceModel}}{}).
 		Error
 }
