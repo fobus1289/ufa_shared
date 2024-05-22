@@ -7,6 +7,7 @@ package main
 import (
     "gorm.io/gorm"
 	{{ $serviceNameLc }}Service "{{$serviceLc}}/{{ $serviceNameLc }}/service"
+    {{ $serviceNameLc }}Model "{{$serviceLc}}/{{ $serviceNameLc }}/model"
     {{ $serviceNameLc }}Handler "{{$serviceLc}}/{{ $serviceNameLc }}/handler"
 
 	pkgConfig "github.com/fobus1289/ufa_shared/config"
@@ -47,6 +48,11 @@ func main() {
 	router := echo.New()
 
 	setMiddlewares(router)
+
+    // Uncomment to add AutoMigrate
+	//if err := db.AutoMigrate({{ $serviceNameLc }}Model.{{ $serviceUc }}Model{}); err != nil {
+	//	return
+	//}
 
 	createHandler(router, db)
 
