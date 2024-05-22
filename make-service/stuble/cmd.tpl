@@ -7,7 +7,7 @@ package main
 import (
     "gorm.io/gorm"
 	{{ $serviceNameLc }}Service "{{$serviceLc}}/{{ $serviceNameLc }}/service"
-    {{ $serviceNameLc }}Model "{{$serviceLc}}/{{ $serviceNameLc }}/model"
+    // {{ $serviceNameLc }}Model "{{$serviceLc}}/{{ $serviceNameLc }}/model"
     {{ $serviceNameLc }}Handler "{{$serviceLc}}/{{ $serviceNameLc }}/handler"
 
 	pkgConfig "github.com/fobus1289/ufa_shared/config"
