@@ -3,7 +3,7 @@ module github.com/fobus1289/ufa_shared
 go 1.22.1
 
 require (
-	github.com/caarlos0/env/v6 v6.10.1
+	github.com/caarlos0/env/v11 v11.0.1
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgconn v1.14.3

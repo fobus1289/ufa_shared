@@ -307,7 +307,7 @@ func (r *repo) Commit() error {
 	return errors.New("not implemented")
 }
 
-func New(cfg connectionConfig) (Repository, error) {
+func New(cfg Config) (Repository, error) {
 	instance, err := RetryConnect(cfg, 20, 10)
 	if err != nil {
 		return nil, err

@@ -1,14 +1,26 @@
 package config
 
 import (
-	"github.com/caarlos0/env/v6"
-
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
-func Load[T any](instance *T) *T {
+func Load[T any](instance *T, filenames ...string) error {
+	if len(filenames) > 0 {
+		if err := godotenv.Load(filenames...); err != nil {
+			return err
+		}
+	}
+
 	if err := env.Parse(instance); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MustLoad[T any](instance *T, filenames ...string) {
+	if err := Load(instance); err != nil {
 		panic(err)
 	}
-	return instance
 }

@@ -24,7 +24,7 @@ func (i *instanceHolder) clone() *instanceHolder {
 // db.SetMaxOpenConns(n)
 // db.SetMaxIdleConns(n)
 // db.SetConnMaxLifetime(n)
-func connect(cfg connectionConfig) (*instanceHolder, error) {
+func connect(cfg Config) (*instanceHolder, error) {
 	// singleton pattern
 	if instance != nil {
 		return instance.clone(), nil
@@ -45,7 +45,7 @@ func connect(cfg connectionConfig) (*instanceHolder, error) {
 // reconnection time cannot be more than 10 seconds one step
 // the number of attempts can be less than or equal to 20
 // connection time out
-func RetryConnect(cfg connectionConfig, tryCount uint, timeout uint64) (*instanceHolder, error) {
+func RetryConnect(cfg Config, tryCount uint, timeout uint64) (*instanceHolder, error) {
 	if timeout > 10 {
 		return nil, errors.New("reconnection time cannot be more than 10 seconds one step")
 	}
@@ -70,7 +70,7 @@ func RetryConnect(cfg connectionConfig, tryCount uint, timeout uint64) (*instanc
 }
 
 // value or error
-func Connect(cfg connectionConfig) (*instanceHolder, error) {
+func Connect(cfg Config) (*instanceHolder, error) {
 	db, err := connect(cfg)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func Connect(cfg connectionConfig) (*instanceHolder, error) {
 }
 
 // value or panic
-func MustConnect(cfg connectionConfig) *instanceHolder {
+func MustConnect(cfg Config) *instanceHolder {
 	db, err := connect(cfg)
 	if err != nil {
 		panic(err)

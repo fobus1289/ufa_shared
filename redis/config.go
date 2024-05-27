@@ -1,5 +1,5 @@
 package redis
 
-type config struct {
+type Config struct {
 	Addr string `env:"REDIS_ADDR"`
 }

@@ -2,7 +2,7 @@ package pg
 
 import "fmt"
 
-type connectionConfig struct {
+type Config struct {
 	host     string
 	user     string
 	password string
@@ -18,8 +18,8 @@ type connectionConfig struct {
 // dbname:   "postgres",
 // port:     5432,
 // sslmode:  false,
-func Default() connectionConfig {
-	return connectionConfig{
+func Default() Config {
+	return Config{
 		host:     "postgres",
 		user:     "postgres",
 		password: "postgres",
@@ -29,14 +29,14 @@ func Default() connectionConfig {
 	}
 }
 
-func (c connectionConfig) ssl() string {
+func (c Config) ssl() string {
 	if !c.sslmode {
 		return "sslmode=disable"
 	}
 	return ""
 }
 
-func (c connectionConfig) build() string {
+func (c Config) build() string {
 	return fmt.Sprintf(
 		`host=%s
      port=%d 
@@ -53,52 +53,52 @@ func (c connectionConfig) build() string {
 	)
 }
 
-func (c *connectionConfig) SetHost(host string) *connectionConfig {
+func (c *Config) SetHost(host string) *Config {
 	c.host = host
 	return c
 }
 
-func (c *connectionConfig) SetPort(port uint) *connectionConfig {
+func (c *Config) SetPort(port uint) *Config {
 	c.port = port
 	return c
 }
 
-func (c *connectionConfig) SetUser(user string) *connectionConfig {
+func (c *Config) SetUser(user string) *Config {
 	c.user = user
 	return c
 }
 
-func (c *connectionConfig) SetPassword(password string) *connectionConfig {
+func (c *Config) SetPassword(password string) *Config {
 	c.password = password
 	return c
 }
 
-func (c *connectionConfig) SetDbname(dbname string) *connectionConfig {
+func (c *Config) SetDbname(dbname string) *Config {
 	c.dbname = dbname
 	return c
 }
 
-func (c *connectionConfig) SetSSL(sslmode bool) *connectionConfig {
+func (c *Config) SetSSL(sslmode bool) *Config {
 	c.sslmode = sslmode
 	return c
 }
 
-func NewConfigEmpty() connectionConfig {
-	return connectionConfig{}
+func NewConfigEmpty() Config {
+	return Config{}
 }
 
 func NewConfigWith(
 	host, user, password, dbname string, port uint, sslmode bool,
-) connectionConfig {
-	return connectionConfig{
+) Config {
+	return Config{
 		host, user, password, dbname, port, sslmode,
 	}
 }
 
 func NewConfig(
 	host, user, password, dbname string, port uint,
-) connectionConfig {
-	return connectionConfig{
+) Config {
+	return Config{
 		host, user, password, dbname, port, false,
 	}
 }

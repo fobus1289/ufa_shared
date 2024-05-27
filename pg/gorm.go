@@ -11,7 +11,7 @@ type gormInstance struct {
 
 var _gormInstance *gormInstance
 
-func NewGorm(c connectionConfig) (*gorm.DB, error) {
+func NewGorm(c *Config) (*gorm.DB, error) {
 
 	if _gormInstance != nil {
 		return _gormInstance.DB, nil
