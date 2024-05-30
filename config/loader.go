@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func Load[T any](instance *T, filenames ...string) error {
