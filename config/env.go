@@ -23,6 +23,7 @@ type EnvProject struct {
 	OneIdSecret      string `env:"ONE_ID_CLIENT_SECRET"`
 	HttpPort         int    `env:"HTTP_PORT"`
 	PgPORT           int    `env:"POSTGRES_PORT"`
+	StoragePath      string `env:"STORAGE_PATH"`
 }
 
 type EnvOs struct {
