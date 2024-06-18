@@ -6,18 +6,18 @@ type numberOrStr interface {
 		string
 }
 
-type ResponseID[T numberOrStr] struct {
+type HttpResponseID[T numberOrStr] struct {
 	Id T `json:"id"`
 }
 
-type errorResponse[T any] struct {
+type HttpErrorResponse[T any] struct {
 	Message T `json:"message"`
 }
 
-func ErrorResponse[T any](message T) *errorResponse[T] {
-	return &errorResponse[T]{message}
+func ErrorResponse[T any](message T) *HttpErrorResponse[T] {
+	return &HttpErrorResponse[T]{message}
 }
 
-func ID[T numberOrStr](id T) *ResponseID[T] {
-	return &ResponseID[T]{id}
+func ID[T numberOrStr](id T) *HttpResponseID[T] {
+	return &HttpResponseID[T]{id}
 }

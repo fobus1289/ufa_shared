@@ -29,9 +29,7 @@ func (h *httpError) Code(status int) HttpError {
 }
 
 func (h *httpError) Send(err error) error {
-	return echo.NewHTTPError(h.status, map[string]string{
-		"message": err.Error(),
-	})
+	return echo.NewHTTPError(h.status, ErrorResponse(err.Error()))
 }
 
 func (h *httpError) BadRequest() error {
