@@ -6,7 +6,7 @@ type numberOrStr interface {
 		string
 }
 
-type responseID[T numberOrStr] struct {
+type ResponseID[T numberOrStr] struct {
 	Id T `json:"id"`
 }
 
@@ -18,6 +18,6 @@ func ErrorResponse[T any](message T) *errorResponse[T] {
 	return &errorResponse[T]{message}
 }
 
-func ID[T numberOrStr](id T) *responseID[T] {
-	return &responseID[T]{id}
+func ID[T numberOrStr](id T) *ResponseID[T] {
+	return &ResponseID[T]{id}
 }
