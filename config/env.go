@@ -14,7 +14,7 @@ type EnvProject struct {
 
 	PgDB       string `env:"POSTGRES_DB"`
 	PgHost     string `env:"POSTGRES_HOST"`
-	PgPort     string `env:"POSTGRES_PORT"`
+	PgPort     uint   `env:"POSTGRES_PORT"`
 	PgUser     string `env:"POSTGRES_USER"`
 	PgPassword string `env:"POSTGRES_PASSWORD"`
 
