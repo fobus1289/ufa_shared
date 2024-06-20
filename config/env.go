@@ -8,22 +8,26 @@ var (
 )
 
 type EnvProject struct {
-	PgPassword       string `env:"POSTGRES_PASSWORD"`
-	JwtRefresh       string `env:"POSTGRES_DB"`
-	RedisAddr        string `env:"REDIS_ADDR"`
-	PgHOST           string `env:"POSTGRES_HOST"`
-	OneIdRedirectUrl string `env:"ONE_ID_LOGIN_REDIRECT_BASE_URL"`
-	PgUSER           string `env:"POSTGRES_USER"`
-	OneIdBaseUrl     string `env:"ONE_ID_BASE_URL"`
-	JwtSecret        string `env:"POSTGRES_DB"`
-	Mode             string `env:"MODE"`
-	JwtExpired       string `env:"POSTGRES_DB"`
-	PgDB             string `env:"POSTGRES_DB"`
-	OneId            string `env:"ONE_ID_CLIENT_ID"`
-	OneIdSecret      string `env:"ONE_ID_CLIENT_SECRET"`
-	HttpPort         int    `env:"HTTP_PORT"`
-	PgPORT           int    `env:"POSTGRES_PORT"`
-	StoragePath      string `env:"STORAGE_PATH"`
+	Mode        string `env:"MODE"`
+	HttpPort    int    `env:"HTTP_PORT"`
+	StoragePath string `env:"STORAGE_PATH"`
+
+	PgDB       string `env:"POSTGRES_DB"`
+	PgHost     string `env:"POSTGRES_HOST"`
+	PgPort     string `env:"POSTGRES_PORT"`
+	PgUser     string `env:"POSTGRES_USER"`
+	PgPassword string `env:"POSTGRES_PASSWORD"`
+
+	RedisAddr string `env:"REDIS_ADDR"`
+
+	JwtSecret  string `env:"JWT_SECRET"`
+	JwtExpire  int64  `env:"JWT_EXPIRE"`
+	JwtRefresh int64  `env:"JWT_REFRESH"`
+
+	OneIdBaseUrl      string `env:"ONE_ID_BASE_URL"`
+	OneIdRedirectUrl  string `env:"ONE_ID_REDIRECT_URL"`
+	OneIdClientId     string `env:"ONE_ID_CLIENT_ID"`
+	OneIdClientSecret string `env:"ONE_ID_CLIENT_SECRET"`
 }
 
 type EnvOs struct {
