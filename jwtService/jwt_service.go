@@ -2,109 +2,122 @@ package jwtService
 
 import (
 	"errors"
-	"github.com/fobus1289/ufa_shared/redis"
-	"github.com/fobus1289/ufa_shared/utils"
-	"github.com/golang-jwt/jwt/v5"
+	"strconv"
 	"time"
-)
 
-type JwtConfig struct {
-	SecretKeyExpireMinutes  uint16 `env:"JWT_SECRET_KEY_EXPIRE_MINUTES"`
-	SecretKey               string `env:"JWT_SECRET_KEY"`
-	RefreshKeyExpireMinutes uint16 `env:"JWT_REFRESH_KEY_EXPIRE_MINUTES"`
-}
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
+)
 
 type IUser interface {
 	ID() int64
-}
-
-type TokenMetadata struct {
-	user IUser
-	jwt.RegisteredClaims
+	Pre(*gorm.DB, echo.Context) error
+	PreWithPermission(*gorm.DB, echo.Context, ...string) error
 }
 
 type Payload[T IUser] struct {
-	IUser
+	User T `json:"user"`
+	jwt.RegisteredClaims
 }
 
-type JwtService interface {
-	ParseTokenWithExpTime(string) (TokenMetadata, error)
-	ParseToken(string) (TokenMetadata, error)
-	GenerateNewTokens(Payload[IUser]) (string, error)
+type JwtService[T IUser] interface {
+	ParseToken(string) (T, error)
+	ParseTokenWithExpired(string) (T, error)
+	Token(T) (string, error)
 }
 
-type jwtService struct {
-	config       *JwtConfig
-	redisService redis.RedisService
+type jwtService[T IUser] struct {
+	config JwtConfig
 }
 
-func NewJwtService(config *JwtConfig) JwtService {
-	return &jwtService{
+func (j *jwtService[T]) Token(user T) (string, error) {
+	return Encode(user, j.config.Secret, j.config.Expired)
+}
+
+func (j *jwtService[T]) ParseToken(token string) (T, error) {
+	payload, err := Decode[T](token, j.config.Secret, false)
+	{
+		if err != nil {
+			var none T
+			return none, err
+		}
+	}
+	return payload.User, nil
+}
+
+func (j *jwtService[T]) ParseTokenWithExpired(token string) (T, error) {
+	payload, err := Decode[T](token, j.config.Secret, true)
+	{
+		if err != nil {
+			var none T
+			return none, err
+		}
+	}
+	return payload.User, nil
+}
+
+func NewJwtService[T IUser](config JwtConfig) JwtService[T] {
+	return &jwtService[T]{
 		config: config,
 	}
 }
 
-func (s *jwtService) ParseToken(tokenString string) (TokenMetadata, error) {
-	token, err := s.parseToken(tokenString)
-	if err != nil {
-		return TokenMetadata{}, err
-	}
+func Encode[T IUser](user T, secret string, expired int64) (string, error) {
 
-	return token.Claims.(TokenMetadata), nil
-}
+	payload := NewPayload(user, expired)
 
-func (s *jwtService) ParseTokenWithExpTime(tokenString string) (TokenMetadata, error) {
-	token, err := s.parseToken(tokenString)
-	if err != nil {
-		return TokenMetadata{}, err
-	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 
-	if !token.Valid {
-		return TokenMetadata{}, errors.New("token is not valid")
-
-	}
-
-	return token.Claims.(TokenMetadata), nil
-}
-
-func (s *jwtService) parseToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.config.SecretKey), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return token, nil
-}
-
-func (s *jwtService) GenerateNewTokens(payload Payload[IUser]) (string, error) {
-	accessToken, err := s.generateNewAccessToken(payload)
-	if err != nil {
-		return "", err
-	}
-
-	return accessToken, nil
-}
-
-func (s *jwtService) generateNewAccessToken(user Payload[IUser]) (string, error) {
-	now := time.Now()
-
-	token := jwt.NewWithClaims(
-		jwt.SigningMethodHS256,
-		TokenMetadata{
-			user: user,
-			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        utils.Int64ToString(user.ID()),
-				ExpiresAt: jwt.NewNumericDate(now.Add(time.Second * time.Duration(s.config.SecretKeyExpireMinutes))),
-				NotBefore: jwt.NewNumericDate(time.Now()),
-			},
-		},
-	)
-
-	tokenString, err := token.SignedString([]byte(s.config.SecretKey))
-	if err != nil {
-		return "", err
+	tokenString, err := token.SignedString([]byte(secret))
+	{
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return tokenString, nil
+}
+
+func Decode[T IUser](tokStr, secret string, withExpired bool) (*Payload[T], error) {
+
+	keyfunc := func(token *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	}
+
+	token, err := jwt.ParseWithClaims(tokStr, &Payload[T]{}, keyfunc)
+	{
+		if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, err
+		}
+
+		if withExpired && !token.Valid {
+			return nil, errors.New("token is not valid")
+		}
+	}
+
+	payload, ok := token.Claims.(*Payload[T])
+	{
+		if !ok {
+			return nil, errors.New("unknown error")
+		}
+	}
+
+	return payload, nil
+}
+
+func NewPayload[T IUser](user T, expired int64) *Payload[T] {
+	now := time.Now()
+
+	exp := now.Add(time.Minute * time.Duration(expired))
+
+	return &Payload[T]{
+		User: user,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        strconv.FormatInt(user.ID(), 10),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+		},
+	}
 }
