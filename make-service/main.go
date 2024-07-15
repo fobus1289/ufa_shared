@@ -86,7 +86,7 @@ func NewService(serviceName string) {
 		path.Join(serviceName+"_service", serviceName, "model", serviceName+".go"):   stuble.Model,
 		path.Join(serviceName+"_service", serviceName, "service", serviceName+".go"): stuble.Service,
 		path.Join(serviceName+"_service", serviceName, "handler", serviceName+".go"): stuble.Handler,
-		path.Join(serviceName+"_service", "transport", "service", "http.go"):         stuble.TransportService,
+		path.Join(serviceName+"_service", "transport", "service", "http.go"):         stuble.Http,
 		path.Join(serviceName+"_service", ".gitignore"):                              stuble.Gitignore,
 		path.Join(serviceName+"_service", ".env"):                                    stuble.Env,
 		path.Join(serviceName+"_service", "example.env"):                             stuble.Env,

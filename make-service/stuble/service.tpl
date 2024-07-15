@@ -1,4 +1,5 @@
 package service
+
 {{ $serviceUc:=ucFirst .ServiceName }}
 {{ $serviceLc:=lcFirst .ServiceName }}
 {{ $service:= printf "%s%s" $serviceLc "_service" }}
@@ -7,101 +8,125 @@ package service
 {{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
 {{ $serviceModelPaginate := printf "%s%s%s" "Service" $serviceUc "ModelPaginate" }}
 {{ $serviceInterface := printf "%s%s" $serviceLc "Service" }}
+
+{{ $serviceNameSc := .ServiceName }}
+{{ $serviceNameUc:=ucFirst .ServiceName }}
+{{ $serviceNameLc:=lcFirst .ServiceName }}
+
+{{ $serviceNameScWithService:= printf "%s%s" .ServiceName "_service" }}
+{{ $serviceNameUcWithService:= ucFirst $serviceNameScWithService }}
+{{ $serviceNameLcWithService:= lcFirst $serviceNameScWithService }}
+
+
 import (
 	"context"
-
 	"github.com/fobus1289/ufa_shared/http/response"
 	"gorm.io/gorm"
 )
 
-type {{$serviceModelPaginate}} = response.PaginateResponse[*{{$serviceModel}}]
 type ServiceScope = func(d *gorm.DB) *gorm.DB
 
-type {{ucFirst $serviceInterface}} interface {
-	FindOne(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModel}}, error)
-	Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error)
-	Page(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModelPaginate}}, error)
-	Create({{$serviceLc}} *{{$serviceModel}}) (int64, error)
-	Update({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error
-	Delete({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error
+type {{ $serviceNameUcWithService }} interface {
+	FindOne(ctx context.Context, scopes ...ServiceScope) (*model.{{ $serviceNameUc }}Model, error)
+	Find(ctx context.Context, scopes ...ServiceScope) ([]model.{{ $serviceNameUc }}Model, error)
+	Page(ctx context.Context, take int, filter, limitFilter ServiceScope) (*dto.Page{{ $serviceNameUc }}ResponseType, error)
+	Create({{ $serviceNameLc }}Dto *dto.Create{{ $serviceNameUc }}Dto) (*response.ID, error)
+	Update({{ $serviceNameLc }}Dto *dto.Update{{ $serviceNameUc }}Dto, scopes ...ServiceScope) error
+	Delete(scopes ...ServiceScope) error
 }
 
-
-type {{$serviceInterface}} struct {
+type {{ $serviceNameLcWithService }} struct {
 	db *gorm.DB
 }
 
-func NewService(db *gorm.DB) {{ucFirst $serviceInterface}} {
-	return &{{$serviceInterface}}{db}
+func NewService(db *gorm.DB) {{ $serviceNameUcWithService }} {
+	return &{{ $serviceNameLcWithService }}{db}
 }
 
-func (s *{{$serviceInterface}}) FindOne(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModel}}, error) {
-
-	var {{ $serviceLc }} {{$serviceModel}}
-
-	err := s.db.Model(&{{$serviceModel}}{}).
-	    WithContext(ctx).
-		Scopes(scopes...).
-		First(&{{ $serviceLc }}).
-		Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &{{ $serviceLc }}, nil
+func (s *{{ $serviceNameLcWithService }}) ModelWithContext(ctx context.Context) *gorm.DB {
+	return s.db.WithContext(ctx).Model(&model.{{ $serviceNameUc }}Model{})
 }
 
-func (s *{{$serviceInterface}}) Find(ctx context.Context, scopes ...ServiceScope) ([]{{$serviceModel}}, error) {
-	var moreModels []{{$serviceModel}}
+func (s *{{ $serviceNameLcWithService }}) Model() *gorm.DB {
+	return s.db.Model(&model.{{ $serviceNameUc }}Model{})
+}
 
-	err := s.db.Model(&{{$serviceModel}}{}).
-	    WithContext(ctx).
-		Scopes(scopes...).
-		Find(&moreModels).
-		Error
+func (s *{{ $serviceNameLcWithService }}) FindOne(ctx context.Context, scopes ...ServiceScope) (*model.{{ $serviceNameUc }}Model, error) {
 
-	if err != nil {
-		return nil, err
+	var {{ $serviceNameLc }} model.{{ $serviceNameUc }}Model
+    {
+		err := s.ModelWithContext(ctx).
+			Scopes(scopes...).
+			First(&{{ $serviceNameLc }}).
+			Error
+
+		if err != nil {
+			return nil, err
+		}
+    }
+
+	return &{{ $serviceNameLc }}, nil
+}
+
+func (s *{{ $serviceNameLcWithService }}) Find(ctx context.Context, scopes ...ServiceScope) ([]model.{{ $serviceNameUc }}Model, error) {
+
+	var moreModels []model.{{ $serviceNameUc }}Model
+	{
+		err := s.ModelWithContext(ctx).
+			Scopes(scopes...).
+			Find(&moreModels).
+			Error
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return moreModels, nil
 }
 
-func (s *{{$serviceInterface}}) Page(ctx context.Context, scopes ...ServiceScope) (*{{$serviceModelPaginate}}, error) {
+func (s *{{ $serviceNameLcWithService }}) Page(ctx context.Context, take int, filter, limitFilter ServiceScope) (*dto.Page{{ $serviceNameUc }}ResponseType, error) {
 
-	var (
-	    paginate = &{{$serviceModelPaginate}}{}
-	)
+	tx := s.ModelWithContext(ctx)
 
-	if err := s.db.WithContext(ctx).Scopes(scopes...).Model(&{{$serviceModel}}{}).Count(&paginate.Total).Find(&paginate.Data).Error; err != nil {
-		return paginate, err
+	var total int64
+	{
+		txTotal := tx.Scopes(filter).Count(&total)
+		if err := txTotal.Error; err != nil {
+			return nil, err
+		}
 	}
 
-	return paginate, nil
-}
-
-func (s *{{$serviceInterface}}) Create({{$serviceLc}} *{{$serviceModel}}) (int64, error) {
-
-	err := s.db.Create({{$serviceLc}}).Error
-
-	if err != nil {
-		return 0, err
+    var {{ $serviceNameLc }}s []*model.{{ $serviceNameUc }}Model
+	{
+		if err := tx.Scopes(filter, limitFilter).
+			Find(&{{ $serviceNameLc }}s).Error; err != nil {
+			return nil, err
+		}
 	}
 
-	return {{$serviceLc}}.Id, nil
+	totalPages := int64(math.Ceil(float64(total) / float64(take)))
+
+	return response.NewPaginateResponse(totalPages, {{ $serviceNameLc }}s), nil
 }
 
-func (s *{{$serviceInterface}}) Update({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error {
-	return s.db.Model({{$serviceLc}}).
-		Scopes(scopes...).
-		Updates({{$serviceLc}}).
-		Error
+func (s *{{ $serviceNameLcWithService }}) Create({{ $serviceNameLc }}Dto *dto.Create{{ $serviceNameUc }}Dto) (*response.ID, error) {
+
+    {{ $serviceNameLc }} := model.{{ $serviceNameUc }}Model{
+        Name: {{ $serviceNameLc }}Dto.Name,
+    }
+
+	if err := s.db.Create(&{{ $serviceNameLc }}).Error; err != nil {
+		return nil, err
+	}
+
+	return &response.ID{Id: {{ $serviceNameLc }}.Id}, nil
 }
 
-func (s *{{$serviceInterface}}) Delete({{$serviceLc}} *{{$serviceModel}}, scopes ...ServiceScope) error {
-	return s.db.Model({{$serviceLc}}).
-		Scopes(scopes...).
-		Delete(&{{$serviceModel}}{}).
-		Error
+func (s *{{ $serviceNameLcWithService }}) Update({{ $serviceNameLc }}Dto *dto.Update{{ $serviceNameUc }}Dto, scopes ...ServiceScope) error {
+	return s.Model().Scopes(scopes...).Updates({{ $serviceNameLc }}Dto).Error
+}
+
+func (s *{{ $serviceNameLcWithService }}) Delete(scopes ...ServiceScope) error {
+	return s.Model().Scopes(scopes...).Delete(nil).Error
 }
