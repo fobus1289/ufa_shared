@@ -16,7 +16,7 @@ import (
 	"github.com/fobus1289/ufa_shared/http/validator"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
-	_ "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/model"
+	_ "{{ .ModPath }}/{{ $serviceNameSc }}/model"
 )
 
 type {{ $serviceNameLc }}Handler struct {

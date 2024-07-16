@@ -7,16 +7,9 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
 )
 
-func UpdateImports(file *ast.File, newServiceName string) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting current working directory: %v", err)
-	}
-	currentPackageName := filepath.Base(cwd)
+func UpdateImports(file *ast.File, newServiceName, modPath string) error {
 
 	var importDecl *ast.GenDecl
 	for _, decl := range file.Decls {
@@ -30,13 +23,13 @@ func UpdateImports(file *ast.File, newServiceName string) error {
 		import1 := &ast.ImportSpec{
 			Path: &ast.BasicLit{
 				Kind:  token.STRING,
-				Value: fmt.Sprintf("%sHandler \"%s/%s/handler\"", strings.ToLower(newServiceName), currentPackageName, newServiceName),
+				Value: fmt.Sprintf("%sHandler \"%s/%s/handler\"", ToLowerCamel(newServiceName), modPath, ToSnake(newServiceName)),
 			},
 		}
 		import2 := &ast.ImportSpec{
 			Path: &ast.BasicLit{
 				Kind:  token.STRING,
-				Value: fmt.Sprintf("%sService \"%s/%s/service\"", strings.ToLower(newServiceName), currentPackageName, newServiceName),
+				Value: fmt.Sprintf("%sService \"%s/%s/service\"", ToLowerCamel(newServiceName), modPath, ToSnake(newServiceName)),
 			},
 		}
 
@@ -48,9 +41,9 @@ func UpdateImports(file *ast.File, newServiceName string) error {
 	return nil
 }
 
-func InitProject(serviceName string) error {
+func InitProject(serviceName, modPath string) error {
 
-	if err := GoModInit(serviceName, "./"+serviceName+"_service"); err != nil {
+	if err := GoModInit(modPath, "./"+ToSnake(serviceName)+"_service"); err != nil {
 		return err
 	}
 
@@ -65,11 +58,11 @@ func InitProject(serviceName string) error {
 	return nil
 }
 
-func GoModInit(serviceName, dir string) error {
+func GoModInit(modPath, dir string) error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return errors.New("go path not found, please install go")
 	} else {
-		cmd := exec.Command("go", "mod", "init", fmt.Sprintf("%s_service", serviceName))
+		cmd := exec.Command("go", "mod", "init", modPath)
 		cmd.Dir = dir
 		cmd.Stderr = os.Stderr
 

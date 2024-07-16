@@ -10,7 +10,7 @@ package dto
 
 import (
 	"github.com/fobus1289/ufa_shared/http/response"
-	"{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/model"
+	"{{ .ModPath }}/{{ $serviceNameSc }}/model"
 )
 
 type Page{{ $serviceNameUc }}ResponseType = response.PaginateResponse[*model.{{ $serviceNameUc }}Model] // @name Page{{ $serviceNameUc }}ResponseType

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func CreateFiles(serviceName string, files map[string]string) error {
+func CreateFiles(serviceName, modPath string, files map[string]string) error {
 	for filePath, content := range files {
 
 		file, err := os.Create(filePath)
@@ -23,6 +23,7 @@ func CreateFiles(serviceName string, files map[string]string) error {
 
 		m := map[string]string{
 			"ServiceName": serviceName,
+			"ModPath":     modPath,
 		}
 
 		var buffer bytes.Buffer
@@ -44,7 +45,7 @@ func CreateFiles(serviceName string, files map[string]string) error {
 	return nil
 }
 
-func UpdateMainGoFile(serviceName string) error {
+func UpdateMainGoFile(serviceName, modPath string) error {
 	fSet := token.NewFileSet()
 	parsedFile, err := parser.ParseFile(fSet, "cmd/main.go", nil, parser.ParseComments)
 	if err != nil {
@@ -55,7 +56,7 @@ func UpdateMainGoFile(serviceName string) error {
 		return err
 	}
 
-	if err := UpdateImports(parsedFile, serviceName); err != nil {
+	if err := UpdateImports(parsedFile, serviceName, modPath); err != nil {
 		return err
 	}
 
@@ -79,7 +80,7 @@ func UpdateCreateHandler(file *ast.File, serviceName string) error {
 			for _, stmt := range funcDecl.Body.List {
 				blockStmt, ok := stmt.(*ast.BlockStmt)
 				if ok {
-					newLine := fmt.Sprintf("%sHandler.NewHandler(group, %sService.NewService(db))", serviceName, serviceName)
+					newLine := fmt.Sprintf("%sHandler.NewHandler(group, %sService.NewService(db))", ToLowerCamel(serviceName), ToLowerCamel(serviceName))
 
 					newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
 					if err != nil {
@@ -97,7 +98,7 @@ func UpdateCreateHandler(file *ast.File, serviceName string) error {
 	return nil
 }
 
-func UpdateTransportHttpFile(serviceName string) error {
+func UpdateTransportHttpFile(serviceName, modPath string) error {
 	fSet := token.NewFileSet()
 	parsedFile, err := parser.ParseFile(fSet, "transport/service/http.go", nil, parser.ParseComments)
 	if err != nil {
@@ -108,7 +109,7 @@ func UpdateTransportHttpFile(serviceName string) error {
 		return err
 	}
 
-	if err := UpdateImports(parsedFile, serviceName); err != nil {
+	if err := UpdateImports(parsedFile, serviceName, modPath); err != nil {
 		return err
 	}
 
@@ -129,7 +130,7 @@ func UpdateNewService(file *ast.File, serviceName string) error {
 	for _, decl := range file.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
 		if ok && funcDecl.Name.Name == "NewService" {
-			newLine := fmt.Sprintf("%sHandler.NewHandler(routerGroup, %sService.NewService(db))", serviceName, serviceName)
+			newLine := fmt.Sprintf("%sHandler.NewHandler(routerGroup, %sService.NewService(db))", ToLowerCamel(serviceName), ToLowerCamel(serviceName))
 
 			newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
 			if err != nil {

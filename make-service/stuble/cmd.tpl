@@ -10,9 +10,9 @@ package main
 
 import (
     "gorm.io/gorm"
-	{{ $serviceNameLc }}Service "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/service"
-    {{ $serviceNameLc }}Model "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/model"
-    {{ $serviceNameLc }}Handler "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/handler"
+	{{ $serviceNameLc }}Service "{{ .ModPath }}/{{ $serviceNameSc }}/service"
+    {{ $serviceNameLc }}Model "{{ .ModPath }}/{{ $serviceNameSc }}/model"
+    {{ $serviceNameLc }}Handler "{{ .ModPath }}/{{ $serviceNameSc }}/handler"
 
 	loader "github.com/fobus1289/ufa_shared/config"
 	"github.com/fobus1289/ufa_shared/pg"
