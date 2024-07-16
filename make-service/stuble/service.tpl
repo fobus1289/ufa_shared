@@ -1,22 +1,12 @@
 package service
 
-{{ $serviceUc:=ucFirst .ServiceName }}
-{{ $serviceLc:=lcFirst .ServiceName }}
-{{ $service:= printf "%s%s" $serviceLc "_service" }}
-{{ $serviceCreateDto:= printf "dto.Create%s%s" $serviceUc "Dto" }}
-{{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
-{{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
-{{ $serviceModelPaginate := printf "%s%s%s" "Service" $serviceUc "ModelPaginate" }}
-{{ $serviceInterface := printf "%s%s" $serviceLc "Service" }}
+{{ $serviceNameSc :=toSnake .ServiceName }}
+{{ $serviceNameUc:=toCamel .ServiceName }}
+{{ $serviceNameLc:=toLowerCamel .ServiceName }}
 
-{{ $serviceNameSc := .ServiceName }}
-{{ $serviceNameUc:=ucFirst .ServiceName }}
-{{ $serviceNameLc:=lcFirst .ServiceName }}
-
-{{ $serviceNameScWithService:= printf "%s%s" .ServiceName "_service" }}
-{{ $serviceNameUcWithService:= ucFirst $serviceNameScWithService }}
-{{ $serviceNameLcWithService:= lcFirst $serviceNameScWithService }}
-
+{{ $serviceNameScWithService:= printf "%s%s" $serviceNameSc "_service" }}
+{{ $serviceNameUcWithService:= toCamel $serviceNameScWithService }}
+{{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
 
 import (
 	"context"

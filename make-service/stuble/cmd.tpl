@@ -1,12 +1,12 @@
 package main
 
-{{ $serviceNameSc := .ServiceName }}
-{{ $serviceNameUc:=ucFirst .ServiceName }}
-{{ $serviceNameLc:=lcFirst .ServiceName }}
+{{ $serviceNameSc :=toSnake .ServiceName }}
+{{ $serviceNameUc:=toCamel .ServiceName }}
+{{ $serviceNameLc:=toLowerCamel .ServiceName }}
 
-{{ $serviceNameScWithService:= printf "%s%s" .ServiceName "_service" }}
-{{ $serviceNameUcWithService:= ucFirst $serviceNameScWithService }}
-{{ $serviceNameLcWithService:= lcFirst $serviceNameScWithService }}
+{{ $serviceNameScWithService:= printf "%s%s" $serviceNameSc "_service" }}
+{{ $serviceNameUcWithService:= toCamel $serviceNameScWithService }}
+{{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
 
 import (
     "gorm.io/gorm"

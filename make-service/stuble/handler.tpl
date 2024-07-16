@@ -1,34 +1,36 @@
 package handler
-{{ $serviceNameLc:=lcFirst .ServiceName }}
-{{ $serviceNameUc:=ucFirst .ServiceName }}
-{{ $service:= printf "%s%s" .ServiceName "_service" }}
-{{ $serviceLc:=lcFirst .ServiceName }}
-{{ $handlerName:= printf "%s%s" $serviceNameLc "Handler" }}
-{{ $serviceInterface := printf "%s%s" $serviceLc "Service" }}
-{{ $serviceUc:=ucFirst $serviceNameUc }}
-{{ $serviceCreateDto:= printf "dto.Create%s%s" $serviceUc "Dto" }}
-{{ $serviceUpdateDto:= printf "dto.Update%s%s" $serviceUc "Dto" }}
-{{ $serviceModel := printf "model.%s%s" $serviceUc "Model" }}
-import (
 
+{{ $serviceNameSc :=toSnake .ServiceName }}
+{{ $serviceNameUc:=toCamel .ServiceName }}
+{{ $serviceNameLc:=toLowerCamel .ServiceName }}
+{{ $serviceNameKc:=toKebab .ServiceName }}
+{{ $serviceNameWithSpace:=withSpace .ServiceName }}
+
+{{ $serviceNameScWithService:= printf "%s%s" $serviceNameSc "_service" }}
+{{ $serviceNameUcWithService:= toCamel $serviceNameScWithService }}
+{{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
+
+import (
+	_ "github.com/fobus1289/ufa_shared/http/response"
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/http/validator"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
+	_ "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/model"
 )
 
-type {{$handlerName}} struct {
-	service service.{{ucFirst $serviceInterface}}
+type {{ $serviceNameLc }}Handler struct {
+	service service.{{ $serviceNameUc }}Service
 }
 
-func NewHandler(router *echo.Group, service service.{{ucFirst $serviceInterface}}) {
+func NewHandler(router *echo.Group, service service.{{ $serviceNameUc }}Service) {
 
-	group := router.Group("/{{$serviceNameLc}}")
+	group := router.Group("/{{ $serviceNameSc }}")
 	{
-		handler := &{{$handlerName}}{service: service}
+		handler := &{{ $serviceNameLc }}Handler{service: service}
 
-		group.POST("/", handler.Create)
-		group.GET("/", handler.Page)
+		group.POST("", handler.Create)
+		group.GET("/page", handler.Page)
 		group.GET("/:id", handler.GetById)
 		group.PATCH("/:id", handler.Update)
 		group.DELETE("/:id", handler.Delete)
@@ -37,200 +39,192 @@ func NewHandler(router *echo.Group, service service.{{ucFirst $serviceInterface}
 }
 
 // Create godoc
-// @Summary      Create a new {{$serviceNameLc}}
-// @Description  Create {{$serviceNameLc}}
-// @Tags 		 {{$serviceNameLc}}
-// @ID           create-{{$serviceNameLc}}
+// @Summary      Create a new {{ $serviceNameWithSpace }}
+// @Description  Create {{ $serviceNameWithSpace }}
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           create-{{ $serviceNameKc }}
 // @Accept       json
 // @Produce      json
-// @Param        input body {{$serviceCreateDto}} true "{{$serviceNameLc}} information"
-// @Success      201 {object} int64 "Successful operation"
-// @Failure      400 {object} map[string]interface{} "Bad request"
-// @Failure      500 {object} map[string]interface{} "Internal server error"
-// @Router       /{{$serviceNameLc}} [post]
-func (e *{{$handlerName}}) Create(ctx echo.Context) error {
-	var createDto {{$serviceCreateDto}}
+// @Param        input body dto.Create{{ $serviceNameUc }}Dto true "{{ $serviceNameWithSpace }} information"
+// @Success      201 {object} response.ID "Successful operation"
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }} [post]
+func (e *{{ $serviceNameLc }}Handler) Create(c echo.Context) error {
+	var createDto dto.Create{{ $serviceNameUc }}Dto
+	{
+		if err := c.Bind(&createDto); err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
 
-	if err := ctx.Bind(&createDto); err != nil {
-		return http.Response(ctx).BadRequest(echo.Map{"message": err.Error()})
+		if err := validator.Validate(createDto); err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
-	if err := validator.Validate(createDto); err != nil {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": err.Error()},
-		)
+	idDto, err := e.service.Create(&createDto)
+	{
+		if err != nil {
+			return http.HTTPError(err).InternalServerError()
+		}
 	}
 
-	res, err := e.service.Create(createDto.MarshalToDBModel())
-	if err != nil {
-		return http.Response(ctx).InternalServerError(
-			echo.Map{"error": err.Error()},
-		)
-	}
-
-	return http.Response(ctx).Created(res)
+	return http.Response(c).Created(idDto)
 }
 
 // Page godoc
-// @Summary      GetContent all {{$serviceNameLc}} with pagination
-// @Description  GetContent all {{$serviceNameLc}} with pagination
-// @Tags 		 {{$serviceNameLc}}
-// @ID           get-all-{{$serviceNameLc}}
+// @Summary      GetContent all {{ $serviceNameWithSpace }} with pagination
+// @Description  GetContent all {{ $serviceNameWithSpace }} with pagination
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           get-all-{{ $serviceNameKc }}
 // @Accept       json
 // @Produce      json
 // @Param        page query string false "Page number" default(1)
 // @Param        perpage query string false "Number of items per page" default(10)
-// @Success      200 {object} map[string]interface{} "Successful operation"
-// @Failure      500 {object} map[string]interface{} "Internal server error"
-// @Router       /{{$serviceNameLc}} [get]
-func (e *{{$handlerName}}) Page(ctx echo.Context) error {
+// @Param        search query string false "Searching by name or description"
+// @Success      201 {object} response.ID "Successful operation"
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/page [get]
+func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 	var (
-		page     = ctx.QueryParam("page")
-		perPage  = ctx.QueryParam("perpage")
+	    search   = c.QueryParam("search")
+		page     = c.QueryParam("page")
+		perPage  = c.QueryParam("perpage")
 		paginate = http.NewPaginate(page, perPage)
-		rCtx     = ctx.Request().Context()
+		ctx     = c.Request().Context()
 	)
 
-	pageData, err := e.service.Page(rCtx, func(tx *gorm.DB) *gorm.DB {
-		return tx.Offset(paginate.Skip()).Limit(paginate.Take())
-	})
-
-	if err != nil {
-		return http.Response(ctx).InternalServerError(
-			echo.Map{"error": err.Error()},
-		)
+	limitFilter := func(tx *gorm.DB) *gorm.DB {
+		return tx.Offset(paginate.Skip()).Limit(paginate.Take()).Order("id ASC")
 	}
 
-    pageDataResponse := dto.ConvertToPageDataResponse(*pageData)
+	filter := func(tx *gorm.DB) *gorm.DB {
+		if search != "" {
+			search = fmt.Sprintf("%%%s%%", search)
+			tx = tx.Where("name ILIKE ?", search)
+		}
+		return tx
+	}
 
-	return http.Response(ctx).OK(pageDataResponse)
+	pageData, err := e.service.Page(ctx, paginate.Take(), filter, limitFilter)
+	{
+		if err != nil {
+			return http.HTTPError(err).InternalServerError()
+		}
+	}
+	return http.Response(c).OK(pageData)
 }
 
 // GetById godoc
-// @Summary      GetContent {{$serviceNameLc}} by ID
-// @Description  GetContent {{$serviceNameLc}} by ID
-// @Tags 		 {{$serviceNameLc}}
-// @ID           get-{{$serviceNameLc}}-by-id
+// @Summary      GetContent {{ $serviceNameWithSpace }} by ID
+// @Description  GetContent {{ $serviceNameWithSpace }} by ID
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           get-{{ $serviceNameKc }}-by-id
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "{{$serviceNameLc}} ID"
-// @Success      200 {object} {{$serviceModel}} "Successful operation"
-// @Failure      400,404 {object} map[string]interface{} "Bad request or Not found"
-// @Failure      500 {object} map[string]interface{} "Internal server error"
-// @Router       /{{$serviceNameLc}}/{id} [get]
-func (e *{{$handlerName}}) GetById(ctx echo.Context) error {
-	var (
-	    {{ $serviceNameLc }}Response dto.{{ $serviceNameUc }}ResponseDto
-		id         int64
-		idStr      = ctx.Param("id")
-		paramValue = http.PathValue(idStr)
-	)
+// @Param        id path string true "{{ $serviceNameWithSpace }} ID"
+// @Success      200 {object} model.{{ $serviceNameUc }}Model "Successful operation"
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/{id} [get]
+func (e *{{ $serviceNameLc }}Handler) GetById(c echo.Context) error {
 
-	if !paramValue.TryInt64(&id) {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": "parse id error"},
-		)
+	var id int64
+	{
+		if !http.PathValue(c.Param("id")).TryInt64(&id) {
+			err := errors.New("error parse id")
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
-	rCtx := ctx.Request().Context()
+	ctx := c.Request().Context()
 
-	{{ $serviceNameLc }}, err := e.service.FindOne(rCtx, func(tx *gorm.DB) *gorm.DB {
+	filter := func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("id", id)
-	})
-
-	if err != nil {
-		return http.Response(ctx).InternalServerError(
-			echo.Map{"error": err.Error()},
-		)
 	}
 
-	{{ $serviceNameLc }}Response.MarshalFromDbModel(*{{ $serviceNameLc }})
+	{{ $serviceNameLc }}, err := e.service.FindOne(ctx, filter)
+	{
+		if err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
+	}
 
-	return http.Response(ctx).OK({{ $serviceNameLc }}Response)
+	return http.Response(c).OK({{ $serviceNameLc }})
 }
 
 // Update godoc
-// @Summary      Update {{$serviceNameLc}} information
-// @Description  Update {{$serviceNameLc}} information by ID
-// @Tags 		 {{$serviceNameLc}}
-// @ID           update-{{$serviceNameLc}}
+// @Summary      Update {{ $serviceNameWithSpace }} information
+// @Description  Update {{ $serviceNameWithSpace }} information by ID
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           update-{{ $serviceNameKc }}
 // @Accept       json
-// @Param        id path string true "{{$serviceNameLc}} ID"
-// @Param        input body {{$serviceUpdateDto}} true "{{$serviceNameLc}} information"
+// @Param        id path string true "{{ $serviceNameWithSpace }} ID"
+// @Param        input body dto.Update{{ $serviceNameUc }}Dto true "{{ $serviceNameWithSpace }} information"
 // @Success      204 "Successful operation"
-// @Failure      400 {object} map[string]interface{} "Bad request"
-// @Failure      500 {object} map[string]interface{} "Internal server error"
-// @Router       /{{$serviceNameLc}}/{id} [patch]
-func (e *{{$handlerName}}) Update(ctx echo.Context) error {
-	var (
-		id         int64
-		idStr      = ctx.Param("id")
-		paramValue = http.PathValue(idStr)
-	)
-
-	if !paramValue.TryInt64(&id) {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": "parse id error"},
-		)
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/{id} [patch]
+func (e *{{ $serviceNameLc }}Handler) Update(c echo.Context) error {
+	var id int64
+	{
+		if !http.PathValue(c.Param("id")).TryInt64(&id) {
+			err := errors.New("parse id error")
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
-	var updateDto {{$serviceUpdateDto}}
-
-	if err := ctx.Bind(&updateDto); err != nil {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": err.Error()},
-		)
+	var updateDto dto.Update{{ $serviceNameUc }}Dto
+	{
+		if err := c.Bind(&updateDto); err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
-	{{ $serviceNameLc }} := {{ $serviceModel }}{Id: id}
-	updateDto.MarshalToDBModel(&{{ $serviceNameLc }})
-
-	err := e.service.Update(&{{ $serviceNameLc }}, func(tx *gorm.DB) *gorm.DB {
+	filter := func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("id", id)
-	})
-
-	if err != nil {
-		return http.Response(ctx).InternalServerError(
-			echo.Map{"error": err.Error()},
-		)
 	}
 
-	return http.Response(ctx).NoContent()
+	err := e.service.Update(&updateDto, filter)
+	{
+		if err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
+	}
+
+	return http.Response(c).NoContent()
 }
 
 // Delete godoc
-// @Summary      Delete {{$serviceNameLc}} by ID
-// @Description  Delete {{$serviceNameLc}} by ID
-// @Tags 		 {{$serviceNameLc}}
-// @ID           delete-{{$serviceNameLc}}
+// @Summary      Delete {{ $serviceNameWithSpace }}
+// @Description  Delete {{ $serviceNameWithSpace }} by ID
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           delete-{{ $serviceNameKc }}
 // @Accept       json
-// @Param        id path string true "{{$serviceNameLc}} ID"
+// @Param        id path string true "{{ $serviceNameWithSpace }} ID"
 // @Success      204 "Successful operation"
-// @Failure      400 {object} map[string]interface{} "Bad request"
-// @Failure      500 {object} map[string]interface{} "Internal server error"
-// @Router       /{{$serviceNameLc}}/{id} [delete]
-func (e *{{$handlerName}}) Delete(ctx echo.Context) error {
-	var (
-		id         int64
-		idStr      = ctx.Param("id")
-		paramValue = http.PathValue(idStr)
-	)
-
-	if !paramValue.TryInt64(&id) {
-		return http.Response(ctx).BadRequest(
-			echo.Map{"message": "parse id error"},
-		)
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/{id} [delete]
+func (e *{{ $serviceNameLc }}Handler) Delete(c echo.Context) error {
+	var id int64
+	{
+		if !http.PathValue(c.Param("id")).TryInt64(&id) {
+			err := errors.New("parse id error")
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
-	err := e.service.Delete(&{{ $serviceModel }}{Id: id}, func(tx *gorm.DB) *gorm.DB {
-		return tx.Where("id", id)
-	})
+	{
+		filter := func(tx *gorm.DB) *gorm.DB {
+			return tx.Where("id", id)
+		}
 
-	if err != nil {
-		return http.Response(ctx).InternalServerError(
-			echo.Map{"error": err.Error()},
-		)
+		if err := e.service.Delete(filter); err != nil {
+			return http.HTTPError(err).InternalServerError()
+		}
 	}
 
-	return http.Response(ctx).NoContent()
+	return http.Response(c).NoContent()
 }

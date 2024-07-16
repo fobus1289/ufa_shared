@@ -1,32 +1,36 @@
 package service
 
 import (
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"strings"
+	"github.com/iancoleman/strcase"
 	"text/template"
 )
 
-func lcFirst(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	uc := ucFirst(s)
-	return strings.ToLower(uc[:1]) + uc[1:]
+func toLowerCamel(s string) string {
+	return strcase.ToLowerCamel(s)
 }
 
-func ucFirst(s string) string {
-	parts := strings.Split(s, "_")
-	caser := cases.Title(language.Tag{}, cases.NoLower)
-	for i, part := range parts {
-		parts[i] = caser.String(part)
-	}
-	return strings.Join(parts, "")
+func toCamel(s string) string {
+	return strcase.ToCamel(s)
+}
+
+func toSnake(s string) string {
+	return strcase.ToSnake(s)
+}
+
+func toKebab(s string) string {
+	return strcase.ToKebab(s)
+}
+
+func withSpace(s string) string {
+	return strcase.ToDelimited(s, ' ')
 }
 
 func Tmp(data string) *template.Template {
 	return template.Must(template.New("").Funcs(template.FuncMap{
-		"ucFirst": ucFirst,
-		"lcFirst": lcFirst,
+		"toCamel":      toCamel,
+		"toLowerCamel": toLowerCamel,
+		"toSnake":      toSnake,
+		"toKebab":      toKebab,
+		"withSpace":    withSpace,
 	}).Parse(data))
 }
