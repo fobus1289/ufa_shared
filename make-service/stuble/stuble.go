@@ -17,8 +17,8 @@ var Service string
 //go:embed handler.tpl
 var Handler string
 
-//go:embed transport_service.tpl
-var TransportService string
+//go:embed http.tpl
+var Http string
 
 //go:embed gitignore.tpl
 var Gitignore string
