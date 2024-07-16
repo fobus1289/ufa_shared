@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func AddService(serviceName string) {
+func AddService(serviceName, modPath string) {
 
 	//TODO: check serviceName if exists
 	var dirs = []string{
@@ -29,17 +29,17 @@ func AddService(serviceName string) {
 		fmt.Sprintf("%s/handler/%s.go", serviceName, serviceName): stuble.Handler,
 	}
 
-	if err := service.CreateFiles(serviceName, files); err != nil {
+	if err := service.CreateFiles(serviceName, modPath, files); err != nil {
 		log.Fatalln(err)
 	}
 
 	//updateCmdMainFile()
-	if err := service.UpdateMainGoFile(serviceName); err != nil {
+	if err := service.UpdateMainGoFile(serviceName, modPath); err != nil {
 		log.Fatalln(err)
 	}
 
 	//updateTransportHttp()
-	if err := service.UpdateTransportHttpFile(serviceName); err != nil {
+	if err := service.UpdateTransportHttpFile(serviceName, modPath); err != nil {
 		log.Fatalln(err)
 	}
 

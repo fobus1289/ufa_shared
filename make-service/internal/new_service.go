@@ -9,7 +9,7 @@ import (
 	"path"
 )
 
-func NewService(serviceName string) {
+func NewService(serviceName, modPath string) {
 	serviceDir := serviceName + "_service"
 
 	if service.Exists(serviceDir) {
@@ -45,13 +45,13 @@ func NewService(serviceName string) {
 		path.Join(serviceName+"_service", "README.md"):                               stuble.README,
 	}
 
-	if err := service.CreateFiles(serviceName, files); err != nil {
+	if err := service.CreateFiles(serviceName, modPath, files); err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Printf("%s created successfully\n", serviceDir)
 
-	if err := service.InitProject(serviceName); err != nil {
+	if err := service.InitProject(serviceName, modPath); err != nil {
 		log.Fatalln(err)
 	}
 

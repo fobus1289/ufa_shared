@@ -9,8 +9,8 @@ package service
 {{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
 
 import (
-	{{ $serviceNameLc }}Service "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/service"
-	{{ $serviceNameLc }}Handler "{{ $serviceNameScWithService }}/{{ $serviceNameSc }}/handler"
+	{{ $serviceNameLc }}Service "{{ .ModPath }}/{{ $serviceNameSc }}/service"
+	{{ $serviceNameLc }}Handler "{{ .ModPath }}/{{ $serviceNameSc }}/handler"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )

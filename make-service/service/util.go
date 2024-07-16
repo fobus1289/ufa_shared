@@ -5,32 +5,32 @@ import (
 	"text/template"
 )
 
-func toLowerCamel(s string) string {
+func ToLowerCamel(s string) string {
 	return strcase.ToLowerCamel(s)
 }
 
-func toCamel(s string) string {
+func ToCamel(s string) string {
 	return strcase.ToCamel(s)
 }
 
-func toSnake(s string) string {
+func ToSnake(s string) string {
 	return strcase.ToSnake(s)
 }
 
-func toKebab(s string) string {
+func ToKebab(s string) string {
 	return strcase.ToKebab(s)
 }
 
-func withSpace(s string) string {
+func WithSpace(s string) string {
 	return strcase.ToDelimited(s, ' ')
 }
 
 func Tmp(data string) *template.Template {
 	return template.Must(template.New("").Funcs(template.FuncMap{
-		"toCamel":      toCamel,
-		"toLowerCamel": toLowerCamel,
-		"toSnake":      toSnake,
-		"toKebab":      toKebab,
-		"withSpace":    withSpace,
+		"toCamel":      ToCamel,
+		"toLowerCamel": ToLowerCamel,
+		"toSnake":      ToSnake,
+		"toKebab":      ToKebab,
+		"withSpace":    WithSpace,
 	}).Parse(data))
 }
