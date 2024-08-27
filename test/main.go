@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"log"
 
+	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/jwtService"
 	"github.com/fobus1289/ufa_shared/middleware"
 	"github.com/labstack/echo/v4"
@@ -10,10 +12,10 @@ import (
 )
 
 type User struct {
-	Id   int64
-	Name string
-	Age  int
-	Role string
+	Id   int64  `form:"id"`
+	Name string `form:"name"`
+	Age  int    `form:"age"`
+	Role string `form:"role"`
 }
 
 func (u *User) ID() int64 {
@@ -28,7 +30,28 @@ func (u *User) PreWithPermission(_ *gorm.DB, _ echo.Context, _ ...string) error 
 	return errors.New("Forbidden")
 }
 
+func FormValue(key string) string {
+	m := map[string]string{
+		"id":   "1",
+		"name": "user 1",
+		"age":  "18",
+		"role": "admin",
+	}
+
+	return m[key]
+}
+
 func main() {
+	var user User
+	{
+		if err := http.MarshalByForm(&user, FormValue); err != nil {
+			log.Println(err)
+		}
+	}
+
+	log.Println(user)
+
+	return
 	jwtService := jwtService.NewJwtService[*User](
 		jwtService.JwtConfig{
 			Secret:  "1234",
