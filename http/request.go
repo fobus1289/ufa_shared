@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type tagInfo struct {
@@ -14,6 +15,15 @@ type tagInfo struct {
 	DefaultValue string
 	Required     bool
 	InValues     []string
+}
+
+var timeLayouts = []string{
+	time.RFC3339,
+	time.RFC3339Nano,
+	time.RFC1123Z,
+	time.RFC1123,
+	time.DateTime,
+	time.DateOnly,
 }
 
 func MarshalByQuery[T any](s *T, finder func(string) string) error {
@@ -133,10 +143,11 @@ func setFieldValue(val string, field reflect.Value) error {
 		eAddr = field
 	}
 
-	convertedVal := convertVal(eKind, val)
+	convertedVal, err := convertVal(eKind, val)
 
-	if convertedVal == nil {
-		return fmt.Errorf("cannot convert %s to %s. Value: %s", reflect.TypeOf(val), eKind, val)
+	if err != nil {
+
+		return err
 	}
 
 	addrV := reflect.ValueOf(convertedVal)
@@ -156,130 +167,149 @@ func getFinal(field reflect.Value) (reflect.Type, reflect.Value) {
 	return field.Type(), field
 }
 
-func convertVal(t reflect.Type, val string) any {
+func parseTime(dateTime string) (*time.Time, error) {
+	for _, layout := range timeLayouts {
+		timeFormatted, err := time.Parse(layout, dateTime)
+		if err != nil || timeFormatted.Year() <= 1 { // Year 1 is the default zero value
+			continue
+		}
+		return &timeFormatted, nil
+	}
+	return nil, errors.New(fmt.Sprintf("invalid date time: %s", dateTime))
+}
+
+func convertVal(t reflect.Type, val string) (any, error) {
 	switch t.Kind() {
 	case reflect.Bool:
 		v, err := strconv.ParseBool(val)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return v
+		return v, nil
 
 	case reflect.Int:
 		v, err := strconv.ParseInt(val, 10, 0)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return int(v)
+		return int(v), nil
 
 	case reflect.Int8:
 		v, err := strconv.ParseInt(val, 10, 8)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return int8(v)
+		return int8(v), nil
 
 	case reflect.Int16:
 		v, err := strconv.ParseInt(val, 10, 16)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return int16(v)
+		return int16(v), nil
 
 	case reflect.Int32:
 		v, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return int32(v)
+		return int32(v), nil
 
 	case reflect.Int64:
 		v, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return v
+		return v, nil
 
 	case reflect.Uint:
 		v, err := strconv.ParseUint(val, 10, 0)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return uint(v)
+		return uint(v), nil
 
 	case reflect.Uint8:
 		v, err := strconv.ParseUint(val, 10, 8)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return uint8(v)
+		return uint8(v), nil
 
 	case reflect.Uint16:
 		v, err := strconv.ParseUint(val, 10, 16)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return uint16(v)
+		return uint16(v), nil
 
 	case reflect.Uint32:
 		v, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return uint32(v)
+		return uint32(v), nil
 
 	case reflect.Uint64:
 		v, err := strconv.ParseUint(val, 10, 64)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return v
+		return v, nil
 
 	case reflect.Float32:
 		v, err := strconv.ParseFloat(val, 32)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return float32(v)
+		return float32(v), nil
 
 	case reflect.Float64:
 		v, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return v
+		return v, nil
 
 	case reflect.Complex64:
 		v, err := strconv.ParseComplex(val, 64)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return complex64(v)
+		return complex64(v), nil
 
 	case reflect.Complex128:
 		v, err := strconv.ParseComplex(val, 128)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return v
+		return v, nil
 
 	case reflect.Slice:
 		sliceElemType := t.Elem()
 		slicePtr := reflect.New(reflect.SliceOf(sliceElemType)).Interface()
 
 		err := json.Unmarshal([]byte(val), &slicePtr)
-		{
-			if err != nil {
-				return nil
-			}
+		if err != nil {
+			return nil, err
 		}
 
-		return reflect.ValueOf(slicePtr).Elem().Interface()
+		return reflect.ValueOf(slicePtr).Elem().Interface(), nil
 
 	case reflect.String:
-		return val
+		return val, nil
+
+	case reflect.Struct:
+		if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+			convertedTime, err := parseTime(val)
+			if err == nil {
+				return *convertedTime, nil
+			}
+			return nil, err
+		}
+		return nil, errors.New("unsupported struct type")
 
 	default:
-		return nil
+		return nil, errors.New("unsupported type")
 	}
 }
