@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"os"
 )
@@ -9,7 +8,7 @@ import (
 func CreateFolders(dirs []string) error {
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0750); err != nil {
-			return errors.New(fmt.Sprintf("create folder error: %v", err))
+			return fmt.Errorf("create folder error: %v", err)
 		}
 	}
 
@@ -18,8 +17,10 @@ func CreateFolders(dirs []string) error {
 
 func Exists(serviceName string) bool {
 	info, err := os.Stat(serviceName)
-	if os.IsNotExist(err) {
-		return false
+	{
+		if os.IsNotExist(err) {
+			return false
+		}
 	}
 
 	return info.IsDir() && !os.IsNotExist(err)

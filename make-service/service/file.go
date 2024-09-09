@@ -2,7 +2,6 @@ package service
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"go/ast"
@@ -17,9 +16,12 @@ func CreateFiles(serviceName, modPath string, files map[string]string) error {
 	for filePath, content := range files {
 
 		file, err := os.Create(filePath)
-		if err != nil {
-			return errors.New(fmt.Sprintf("create file error %v", err))
+		{
+			if err != nil {
+				return fmt.Errorf("create file error %v", err)
+			}
 		}
+		defer file.Close()
 
 		m := map[string]string{
 			"ServiceName": serviceName,
@@ -29,16 +31,12 @@ func CreateFiles(serviceName, modPath string, files map[string]string) error {
 		var buffer bytes.Buffer
 		{
 			if err := Tmp(content).Execute(&buffer, m); err != nil {
-				_ = file.Close()
-				return errors.New(fmt.Sprintf("content copy error %v", err))
+				return fmt.Errorf("content copy error %v", err)
 			}
 
 			if _, err := file.Write(buffer.Bytes()); err != nil {
-				_ = file.Close()
-				return errors.New(fmt.Sprintf("write content error %v", err))
+				return fmt.Errorf("write content error %v", err)
 			}
-
-			_ = file.Close()
 		}
 	}
 
@@ -47,9 +45,12 @@ func CreateFiles(serviceName, modPath string, files map[string]string) error {
 
 func UpdateMainGoFile(serviceName, modPath string) error {
 	fSet := token.NewFileSet()
+
 	parsedFile, err := parser.ParseFile(fSet, "cmd/main.go", nil, parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("error parsing file: %v", err)
+	{
+		if err != nil {
+			return fmt.Errorf("error parsing file: %v", err)
+		}
 	}
 
 	if err := UpdateCreateHandler(parsedFile, serviceName); err != nil {
@@ -61,8 +62,10 @@ func UpdateMainGoFile(serviceName, modPath string) error {
 	}
 
 	outFile, err := os.Create("cmd/main.go")
-	if err != nil {
-		return fmt.Errorf("error creating output file: %v", err)
+	{
+		if err != nil {
+			return fmt.Errorf("error creating output file: %v", err)
+		}
 	}
 	defer outFile.Close()
 
@@ -100,9 +103,12 @@ func UpdateCreateHandler(file *ast.File, serviceName string) error {
 
 func UpdateTransportHttpFile(serviceName, modPath string) error {
 	fSet := token.NewFileSet()
+
 	parsedFile, err := parser.ParseFile(fSet, "transport/service/http.go", nil, parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("error parsing file: %v", err)
+	{
+		if err != nil {
+			return fmt.Errorf("error parsing file: %v", err)
+		}
 	}
 
 	if err := UpdateNewService(parsedFile, serviceName); err != nil {
@@ -114,8 +120,10 @@ func UpdateTransportHttpFile(serviceName, modPath string) error {
 	}
 
 	outFile, err := os.Create("transport/service/http.go")
-	if err != nil {
-		return fmt.Errorf("error creating output file: %v", err)
+	{
+		if err != nil {
+			return fmt.Errorf("error creating output file: %v", err)
+		}
 	}
 	defer outFile.Close()
 

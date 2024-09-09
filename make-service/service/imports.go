@@ -67,7 +67,7 @@ func GoModInit(modPath, dir string) error {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return errors.New(fmt.Sprintf("Failed to execute go mod init: %v\n", err))
+			return fmt.Errorf("failed to execute go mod init: %v", err)
 		}
 	}
 
@@ -83,7 +83,7 @@ func GoModTidy(dir string) error {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return errors.New(fmt.Sprintf("Failed to execute go mod tidy: %v\n", err))
+			return fmt.Errorf("failed to execute go mod tidy: %v", err)
 		}
 	}
 
@@ -99,7 +99,7 @@ func RunGoImports(packagePath, dir string) error {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return errors.New(fmt.Sprintf("Failed to install goimports %v\n", err))
+			return fmt.Errorf("failed to install goimports %v", err)
 		}
 	}
 
@@ -111,7 +111,7 @@ func RunGoImports(packagePath, dir string) error {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return errors.New(fmt.Sprintf("Failed to execute goimports: %v\n", err))
+			return fmt.Errorf("failed to execute goimports: %v", err)
 		}
 	}
 
