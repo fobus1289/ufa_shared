@@ -78,23 +78,37 @@ func UpdateMainGoFile(serviceName, modPath string) error {
 
 func UpdateCreateHandler(file *ast.File, serviceName string) error {
 	for _, decl := range file.Decls {
+
 		funcDecl, ok := decl.(*ast.FuncDecl)
-		if ok && funcDecl.Name.Name == "createHandler" {
-			for _, stmt := range funcDecl.Body.List {
-				blockStmt, ok := stmt.(*ast.BlockStmt)
-				if ok {
-					newLine := fmt.Sprintf("%sHandler.NewHandler(group, %sService.NewService(db))", ToLowerCamel(serviceName), ToLowerCamel(serviceName))
+		{
+			if !ok || funcDecl.Name.Name != "createHandler" {
+				continue
+			}
+		}
 
-					newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
-					if err != nil {
-						return fmt.Errorf("error parsing new line: %v", err)
-					}
-
-					newStmt := &ast.ExprStmt{X: newExpr}
-
-					blockStmt.List = append(blockStmt.List, newStmt)
+		for _, stmt := range funcDecl.Body.List {
+			blockStmt, ok := stmt.(*ast.BlockStmt)
+			{
+				if !ok {
+					continue
 				}
 			}
+
+			newLine := fmt.Sprintf(
+				"%sHandler.NewHandler(group, %sService.NewService(db))",
+				ToLowerCamel(serviceName), ToLowerCamel(serviceName),
+			)
+
+			newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
+			{
+				if err != nil {
+					return fmt.Errorf("error parsing new line: %v", err)
+				}
+			}
+
+			newStmt := &ast.ExprStmt{X: newExpr}
+
+			blockStmt.List = append(blockStmt.List, newStmt)
 		}
 	}
 
@@ -136,19 +150,29 @@ func UpdateTransportHttpFile(serviceName, modPath string) error {
 
 func UpdateNewService(file *ast.File, serviceName string) error {
 	for _, decl := range file.Decls {
-		funcDecl, ok := decl.(*ast.FuncDecl)
-		if ok && funcDecl.Name.Name == "NewService" {
-			newLine := fmt.Sprintf("%sHandler.NewHandler(routerGroup, %sService.NewService(db))", ToLowerCamel(serviceName), ToLowerCamel(serviceName))
 
-			newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
+		funcDecl, ok := decl.(*ast.FuncDecl)
+		{
+			if !ok || funcDecl.Name.Name != "NewService" {
+				continue
+			}
+		}
+
+		newLine := fmt.Sprintf(
+			"%sHandler.NewHandler(routerGroup, %sService.NewService(db))",
+			ToLowerCamel(serviceName), ToLowerCamel(serviceName),
+		)
+
+		newExpr, err := parser.ParseExpr(strings.TrimSpace(newLine))
+		{
 			if err != nil {
 				return fmt.Errorf("error parsing new line: %v", err)
 			}
-
-			newStmt := &ast.ExprStmt{X: newExpr}
-
-			funcDecl.Body.List = append(funcDecl.Body.List, newStmt)
 		}
+
+		newStmt := &ast.ExprStmt{X: newExpr}
+
+		funcDecl.Body.List = append(funcDecl.Body.List, newStmt)
 	}
 	return nil
 }
