@@ -4,26 +4,30 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/fobus1289/ufa_shared/make-service/internal"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/fobus1289/ufa_shared/make-service/internal"
 )
 
 func main() {
-	if len(os.Args) > 1 {
+
+	if len(os.Args) == 0 {
+		log.Fatalln(errors.New("not enough arguments"))
+	}
+
+	switch os.Args[1] {
+	case "--new":
 		projectName := promptInput("Enter project name: ")
 		modPath := promptInput("Enter project mod path: ")
-		switch os.Args[1] {
-		case "--new":
-			internal.NewService(projectName, modPath)
-		case "--add":
-			internal.AddService(projectName, modPath)
-		default:
-			log.Fatalln(errors.New("unknown flag"))
-		}
-	} else {
-		log.Fatalln(errors.New("not enough arguments"))
+		internal.NewService(projectName, modPath)
+	case "--add":
+		projectName := promptInput("Enter project name: ")
+		modPath := promptInput("Enter project mod path: ")
+		internal.AddService(projectName, modPath)
+	default:
+		log.Fatalln(errors.New("unknown flag"))
 	}
 }
 

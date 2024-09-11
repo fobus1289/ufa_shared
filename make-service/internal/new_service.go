@@ -3,10 +3,11 @@ package internal
 import (
 	"errors"
 	"fmt"
-	"github.com/fobus1289/ufa_shared/make-service/service"
-	"github.com/fobus1289/ufa_shared/make-service/stuble"
 	"log"
 	"path"
+
+	"github.com/fobus1289/ufa_shared/make-service/service"
+	"github.com/fobus1289/ufa_shared/make-service/stuble"
 )
 
 func NewService(serviceName, modPath string) {
