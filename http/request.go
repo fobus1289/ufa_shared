@@ -307,6 +307,13 @@ func convertVal(t reflect.Type, val string) (any, error) {
 			}
 			return nil, err
 		}
+
+		structPtr := reflect.New(t).Interface()
+		err := json.Unmarshal([]byte(val), &structPtr)
+		if err == nil {
+			return reflect.ValueOf(structPtr).Elem().Interface(), nil
+		}
+
 		return nil, errors.New("unsupported struct type")
 
 	default:
