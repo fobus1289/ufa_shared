@@ -1,0 +1,9 @@
+model User {
+    id int
+    Name string
+    Age float
+}
+
+dto User = Partical<User>
+
+dto User = Partical<User>

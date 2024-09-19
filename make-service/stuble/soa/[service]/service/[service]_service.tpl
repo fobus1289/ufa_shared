@@ -1,0 +1,1 @@
+package {{ .ProjectName "Service" }}

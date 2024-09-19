@@ -1,0 +1,2 @@
+package {{ .ProjectName "Dto" }}
+
