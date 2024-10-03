@@ -3,8 +3,10 @@ package gentest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"text/template"
 
 	"github.com/fobus1289/ufa_shared/make-service/stuble"
@@ -75,18 +77,39 @@ func generateCodeByTpl(data any, tpl string) (string, error) {
 	return string(dataimport), nil
 }
 
-// Write generated Go code to file
 func writeToFile(content string, path string) error {
-	f, err := os.Create(path + "/api_test.go")
-	{
+	filePath := filepath.Join(path, "api_test.go")
+
+	file, err := os.Open(filePath)
+	if err == nil {
+		defer file.Close()
+
+		fileInfo, err := file.Stat()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get file info: %w", err)
 		}
+
+		if fileInfo.Size() > 0 {
+			return fmt.Errorf("test file already exists and is not empty")
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("failed to open file %s: %w", filePath, err)
+	}
+
+	// File is either new or empty, create or truncate the file
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filePath, err)
 	}
 	defer f.Close()
 
+	// Write the new content to the file
 	_, err = f.WriteString(content)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to write content to file %s: %w", filePath, err)
+	}
+
+	return nil
 }
 
 func GenerateTest(swaggFilePath, testPath string) {
