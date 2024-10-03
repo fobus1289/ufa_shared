@@ -25,6 +25,7 @@ type JwtService[T IUser] interface {
 	ParseToken(string) (T, error)
 	ParseTokenWithExpired(string) (T, error)
 	Token(T) (string, error)
+	Config() JwtConfig
 }
 
 type jwtService[T IUser] struct {
@@ -57,6 +58,10 @@ func (j *jwtService[T]) ParseTokenWithExpired(token string) (T, error) {
 	return payload.User, nil
 }
 
+func (j *jwtService[T]) Config() JwtConfig {
+	return j.config
+}
+
 func NewJwtService[T IUser](config JwtConfig) JwtService[T] {
 	return &jwtService[T]{
 		config: config,
@@ -64,7 +69,6 @@ func NewJwtService[T IUser](config JwtConfig) JwtService[T] {
 }
 
 func Encode[T IUser](user T, secret string, expired int64) (string, error) {
-
 	payload := NewPayload(user, expired)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -80,7 +84,6 @@ func Encode[T IUser](user T, secret string, expired int64) (string, error) {
 }
 
 func Decode[T IUser](tokStr, secret string, withExpired bool) (*Payload[T], error) {
-
 	keyfunc := func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	}
