@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	gentest "github.com/fobus1289/ufa_shared/make-service/gen-test"
 	"github.com/fobus1289/ufa_shared/make-service/internal"
 )
 
@@ -26,6 +27,10 @@ func main() {
 		projectName := promptInput("Enter project name: ")
 		modPath := promptInput("Enter project mod path: ")
 		internal.AddService(projectName, modPath)
+	case "--test":
+		swaggFilePath := promptInput("Enter swagg file path: ")
+		testPath := promptInput("Enter test path: ")
+		gentest.GenerateTest(swaggFilePath, testPath)
 	default:
 		log.Fatalln(errors.New("unknown flag"))
 	}

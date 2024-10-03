@@ -28,3 +28,10 @@ var Env string
 
 //go:embed README.tpl
 var README string
+
+//go:embed tepmlate.go.tmpl
+var GoTest string
+
+func GetTemplate() string {
+	return GoTest
+}
