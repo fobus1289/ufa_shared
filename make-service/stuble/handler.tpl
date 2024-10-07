@@ -82,7 +82,7 @@ func (e *{{ $serviceNameLc }}Handler) Create(c echo.Context) error {
 // @Param        page query string false "Page number" default(1)
 // @Param        perpage query string false "Number of items per page" default(10)
 // @Param        search query string false "Searching by name or description"
-// @Success      201 {object} response.ID "Successful operation"
+// @Success      200 {object} response.ID "Successful operation"
 // @Failure      400 {object} response.ErrorResponse "Bad request"
 // @Failure      500 {object} response.ErrorResponse "Internal server error"
 // @Router       /{{ $serviceNameSc }}/page [get]
