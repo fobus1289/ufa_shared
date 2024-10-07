@@ -42,7 +42,7 @@ func transformPerPage(perPage string) int {
 	value, err := strconv.ParseInt(perPage, 10, 32)
 	{
 		if err != nil || value < 1 {
-			value = 5
+			value = 10
 		} else if value > 25 {
 			value = 25
 		}
