@@ -65,7 +65,7 @@ func (e *{{ $serviceNameLc }}Handler) Create(c echo.Context) error {
 	idDto, err := e.service.Create(&createDto)
 	{
 		if err != nil {
-			return http.HTTPError(err).InternalServerError()
+			return http.HTTPError(err).BadRequest()
 		}
 	}
 
@@ -82,7 +82,7 @@ func (e *{{ $serviceNameLc }}Handler) Create(c echo.Context) error {
 // @Param        page query string false "Page number" default(1)
 // @Param        perpage query string false "Number of items per page" default(10)
 // @Param        search query string false "Searching by name or description"
-// @Success      201 {object} response.ID "Successful operation"
+// @Success      200 {object} response.ID "Successful operation"
 // @Failure      400 {object} response.ErrorResponse "Bad request"
 // @Failure      500 {object} response.ErrorResponse "Internal server error"
 // @Router       /{{ $serviceNameSc }}/page [get]
@@ -110,7 +110,7 @@ func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 	pageData, err := e.service.Page(ctx, paginate.Take(), filter, limitFilter)
 	{
 		if err != nil {
-			return http.HTTPError(err).InternalServerError()
+			return http.HTTPError(err).BadRequest()
 		}
 	}
 	return http.Response(c).OK(pageData)
@@ -222,7 +222,7 @@ func (e *{{ $serviceNameLc }}Handler) Delete(c echo.Context) error {
 		}
 
 		if err := e.service.Delete(filter); err != nil {
-			return http.HTTPError(err).InternalServerError()
+			return http.HTTPError(err).BadRequest()
 		}
 	}
 
