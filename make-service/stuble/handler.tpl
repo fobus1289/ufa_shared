@@ -32,7 +32,9 @@ func NewHandler(router *echo.Group, service service.{{ $serviceNameUc }}Service)
 		group.POST("", handler.Create)
 		group.GET("/page", handler.Page)
 		group.GET("/:id", handler.GetById)
+		group.GET("/search", handler.Search)
 		group.PATCH("/:id", handler.Update)
+		group.PUT("/:id", handler.ChangeVisibility)
 		group.DELETE("/:id", handler.Delete)
 
 	}
@@ -100,6 +102,8 @@ func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 	}
 
 	filter := func(tx *gorm.DB) *gorm.DB {
+		tx = tx.Where("is_visible = ?", true)
+
 		if search != "" {
 			search = fmt.Sprintf("%%%s%%", search)
 			tx = tx.Where("name ILIKE ?", search)
@@ -115,6 +119,57 @@ func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 	}
 	return http.Response(c).OK(pageData)
 }
+
+// Search godoc
+// @Summary      GetContent all {{ $serviceNameWithSpace }} with pagination
+// @Description  GetContent all {{ $serviceNameWithSpace }} with pagination
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           get-all-{{ $serviceNameKc }}
+// @Accept       json
+// @Produce      json
+// @Param        search query string false "Searching by name or description"
+// @Param        limit  query int    false "Limit the number of results" default(20)
+// @Success      200 {object} response.ID "Successful operation"
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/search [get]
+func (e *{{ $serviceNameLc }}Handler) Search(c echo.Context) error {
+	const defaultLimit = 15
+	const maxLimit = 100
+	
+	search := strings.TrimSpace(c.QueryParam("search"))
+	ctx := c.Request().Context()
+
+	limitParam := c.QueryParam("limit")
+	limit, err := strconv.Atoi(limitParam)
+	{
+		if err != nil || limit <= 0 {
+			limit = defaultLimit
+		}
+		if limit > maxLimit {
+			limit = maxLimit
+		}
+	}
+
+	filter := func(tx *gorm.DB) *gorm.DB {
+		tx = tx.Where("is_visible = ?", true)
+
+		if search != "" {
+			searchTerm := fmt.Sprintf("%%%s%%", search)
+			tx = tx.Where("name ILIKE ?", searchTerm)
+		}
+		return tx.Limit(limit)
+	}
+
+	searchData, err := e.service.Find(ctx, filter)
+	if err != nil {
+		return http.HTTPError(err).BadRequest()
+	}
+
+	return http.Response(c).OK(searchData)
+}
+
+
 
 // GetById godoc
 // @Summary      GetContent {{ $serviceNameWithSpace }} by ID
@@ -141,7 +196,7 @@ func (e *{{ $serviceNameLc }}Handler) GetById(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	filter := func(tx *gorm.DB) *gorm.DB {
-		return tx.Where("id", id)
+		return tx.Where("id = ?", id).Where("is_visible = ?", true)
 	}
 
 	{{ $serviceNameLc }}, err := e.service.FindOne(ctx, filter)
@@ -222,6 +277,40 @@ func (e *{{ $serviceNameLc }}Handler) Delete(c echo.Context) error {
 		}
 
 		if err := e.service.Delete(filter); err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
+	}
+
+	return http.Response(c).NoContent()
+}
+
+// PUT godoc
+// @Summary      put {{ $serviceNameWithSpace }}
+// @Description  put {{ $serviceNameWithSpace }} by ID
+// @Tags 		 {{ $serviceNameSc }}
+// @ID           change-visibility-{{ $serviceNameKc }}
+// @Accept       json
+// @Param        id path string true "{{ $serviceNameWithSpace }} ID"
+// @Success      204 "Successful operation"
+// @Failure      400 {object} response.ErrorResponse "Bad request"
+// @Failure      500 {object} response.ErrorResponse "Internal server error"
+// @Router       /{{ $serviceNameSc }}/{id} [put]
+func (e *{{ $serviceNameLc }}Handler) ChangeVisibility(c echo.Context) error {
+	var id int64
+	{
+		if !http.PathValue(c.Param("id")).TryInt64(&id) {
+			err := errors.New("parse id error")
+			return http.HTTPError(err).BadRequest()
+		}
+	}
+
+	filter := func(tx *gorm.DB) *gorm.DB {
+		return tx.Where("id", id)
+	}
+
+	err := e.service.ChangeVisibility(filter)
+	{
+		if err != nil {
 			return http.HTTPError(err).BadRequest()
 		}
 	}
