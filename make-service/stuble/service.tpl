@@ -22,6 +22,7 @@ type {{ $serviceNameUcWithService }} interface {
 	Page(ctx context.Context, take int, filter, limitFilter ServiceScope) (*dto.Page{{ $serviceNameUc }}ResponseType, error)
 	Create({{ $serviceNameLc }}Dto *dto.Create{{ $serviceNameUc }}Dto) (*response.ID, error)
 	Update({{ $serviceNameLc }}Dto *dto.Update{{ $serviceNameUc }}Dto, scopes ...ServiceScope) error
+	ChangeVisibility(scopes ...ServiceScope) error
 	Delete(scopes ...ServiceScope) error
 }
 
@@ -119,4 +120,20 @@ func (s *{{ $serviceNameLcWithService }}) Update({{ $serviceNameLc }}Dto *dto.Up
 
 func (s *{{ $serviceNameLcWithService }}) Delete(scopes ...ServiceScope) error {
 	return s.Model().Scopes(scopes...).Delete(nil).Error
+}
+
+func (s *{{ $serviceNameLcWithService }}) ChangeVisibility(scopes ...ServiceScope) error {
+	var {{ $serviceNameLc }} model.{{ $serviceNameUc }}Model
+
+	if err := s.Model().Scopes(scopes...).First(&{{ $serviceNameLc }}).Error; err != nil {
+		return err
+	}
+
+	newVisibility := !{{ $serviceNameLc }}.IsVisible
+
+	if err := s.Model().Scopes(scopes...).Updates(map[string]interface{}{"is_visible": newVisibility}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
