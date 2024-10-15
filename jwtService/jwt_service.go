@@ -6,69 +6,66 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
-type IUser interface {
+type IUser[T, E, K any] interface {
 	ID() int64
-	Pre(*gorm.DB, echo.Context) error
-	PreWithPermission(*gorm.DB, echo.Context, ...string) error
+	Pre(T, E, ...K) error
 }
 
-type Payload[T IUser] struct {
-	User T `json:"user"`
+type Payload[U IUser[T, E, K], T, E, K any] struct {
+	User U `json:"user"`
 	jwt.RegisteredClaims
 }
 
-type JwtService[T IUser] interface {
-	ParseToken(string) (T, error)
-	ParseTokenWithExpired(string) (T, error)
-	Token(T) (string, error)
+type JwtService[U IUser[T, E, K], T, E, K any] interface {
+	ParseToken(string) (U, error)
+	ParseTokenWithExpired(string) (U, error)
+	Token(U) (string, error)
 	Config() JwtConfig
 }
 
-type jwtService[T IUser] struct {
+type jwtService[U IUser[T, E, K], T, E, K any] struct {
 	config JwtConfig
 }
 
-func (j *jwtService[T]) Token(user T) (string, error) {
-	return Encode(user, j.config.Secret, j.config.Expired)
+func (j *jwtService[U, T, E, K]) Token(user U) (string, error) {
+	return Encode[U](user, j.config.Secret, j.config.Expired)
 }
 
-func (j *jwtService[T]) ParseToken(token string) (T, error) {
-	payload, err := Decode[T](token, j.config.Secret, false)
+func (j *jwtService[U, T, E, K]) ParseToken(token string) (U, error) {
+	payload, err := Decode[U](token, j.config.Secret, false)
 	{
 		if err != nil {
-			var none T
+			var none U
 			return none, err
 		}
 	}
 	return payload.User, nil
 }
 
-func (j *jwtService[T]) ParseTokenWithExpired(token string) (T, error) {
-	payload, err := Decode[T](token, j.config.Secret, true)
+func (j *jwtService[U, T, E, K]) ParseTokenWithExpired(token string) (U, error) {
+	payload, err := Decode[U](token, j.config.Secret, true)
 	{
 		if err != nil {
-			var none T
+			var none U
 			return none, err
 		}
 	}
 	return payload.User, nil
 }
 
-func (j *jwtService[T]) Config() JwtConfig {
+func (j *jwtService[U, T, E, K]) Config() JwtConfig {
 	return j.config
 }
 
-func NewJwtService[T IUser](config JwtConfig) JwtService[T] {
-	return &jwtService[T]{
+func NewJwtService[U IUser[T, E, K], T, E, K any](config JwtConfig) JwtService[U, T, E, K] {
+	return &jwtService[U, T, E, K]{
 		config: config,
 	}
 }
 
-func Encode[T IUser](user T, secret string, expired int64) (string, error) {
+func Encode[U IUser[T, E, K], T, E, K any](user U, secret string, expired int64) (string, error) {
 	payload := NewPayload(user, expired)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -83,12 +80,12 @@ func Encode[T IUser](user T, secret string, expired int64) (string, error) {
 	return tokenString, nil
 }
 
-func Decode[T IUser](tokStr, secret string, withExpired bool) (*Payload[T], error) {
+func Decode[U IUser[T, E, K], T, E, K any](tokStr, secret string, withExpired bool) (*Payload[U, T, E, K], error) {
 	keyfunc := func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	}
 
-	token, err := jwt.ParseWithClaims(tokStr, &Payload[T]{}, keyfunc)
+	token, err := jwt.ParseWithClaims(tokStr, &Payload[U, T, E, K]{}, keyfunc)
 	{
 		if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, err
@@ -99,7 +96,7 @@ func Decode[T IUser](tokStr, secret string, withExpired bool) (*Payload[T], erro
 		}
 	}
 
-	payload, ok := token.Claims.(*Payload[T])
+	payload, ok := token.Claims.(*Payload[U, T, E, K])
 	{
 		if !ok {
 			return nil, errors.New("unknown error")
@@ -109,12 +106,12 @@ func Decode[T IUser](tokStr, secret string, withExpired bool) (*Payload[T], erro
 	return payload, nil
 }
 
-func NewPayload[T IUser](user T, expired int64) *Payload[T] {
+func NewPayload[U IUser[T, E, K], T, E, K any](user U, expired int64) *Payload[U, T, E, K] {
 	now := time.Now()
 
 	exp := now.Add(time.Minute * time.Duration(expired))
 
-	return &Payload[T]{
+	return &Payload[U, T, E, K]{
 		User: user,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        strconv.FormatInt(user.ID(), 10),
