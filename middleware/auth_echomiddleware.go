@@ -72,6 +72,11 @@ func (a *AuthEchoMiddleware[U, T, E, K]) Token(user U) (string, error) {
 	return a.jwtService.Token(user)
 }
 
+func (a *AuthEchoMiddleware[U, T, E, K]) TokenWithExpired(user U, expired int64) (string, error) {
+	secret := a.jwtService.Config().Secret
+	return jwtService.Encode(user, secret, expired)
+}
+
 func (a *AuthEchoMiddleware[U, T, E, K]) ParseToken(token string) (U, error) {
 	return a.jwtService.ParseToken(token)
 }
