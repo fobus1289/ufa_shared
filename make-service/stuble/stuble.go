@@ -35,3 +35,9 @@ var GoTest string
 func GetTemplate() string {
 	return GoTest
 }
+
+//go:embed template_auto_front.go.tpl
+var GoTemplateAutoFront string
+func GetTemplateAutoFront() string {
+	return GoTemplateAutoFront
+}

@@ -21,3 +21,6 @@
 go.work
 .idea
 *_service/
+
+try.go
+swagger.json
