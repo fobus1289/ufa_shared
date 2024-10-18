@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	genfrontend "github.com/fobus1289/ufa_shared/make-service/gen-frontend"
 	gentest "github.com/fobus1289/ufa_shared/make-service/gen-test"
 	"github.com/fobus1289/ufa_shared/make-service/internal"
 )
@@ -31,6 +32,10 @@ func main() {
 		swaggFilePath := promptInput("Enter swagg file path: ")
 		testPath := promptInput("Enter test path: ")
 		gentest.GenerateTest(swaggFilePath, testPath)
+	case "--front":
+		swaggFilePath := promptInput("Enter swagg file path: ")
+		testPath := promptInput("Enter test path: ")
+		genfrontend.GenerateFront(swaggFilePath, testPath)
 	default:
 		log.Fatalln(errors.New("unknown flag"))
 	}

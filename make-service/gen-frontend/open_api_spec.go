@@ -56,6 +56,7 @@ type Operation struct {
 	OperationID string                `json:"operationId,omitempty"`
 	Produces    []string              `json:"produces,omitempty"`
 	Consumes    []string              `json:"consumes,omitempty"`
+	Tags        []string              `json:"tags,omitempty"`
 	Parameters  []Parameter           `json:"parameters,omitempty"`
 	Responses   map[string]Response   `json:"responses"`
 	Security    []SecurityRequirement `json:"security,omitempty"`
@@ -147,16 +148,16 @@ func (s *OpenAPISpec) GetSchemes() []string {
 }
 
 // GetPaths returns a copy of the paths map or an empty map if nil.
-func (s *OpenAPISpec) GetPaths() map[string]PathItem {
-	if s.Paths == nil {
-		return make(map[string]PathItem)
-	}
-	pathsCopy := make(map[string]PathItem)
-	for k, v := range s.Paths {
-		pathsCopy[k] = v
-	}
-	return pathsCopy
-}
+// func (s *OpenAPISpec) GetPaths() map[string]PathItem {
+// 	if s.Paths == nil {
+// 		return make(map[string]PathItem)
+// 	}
+// 	pathsCopy := make(map[string]PathItem)
+// 	for k, v := range s.Paths {
+// 		pathsCopy[k] = v
+// 	}
+// 	return pathsCopy
+// }
 
 // GetDefinitions returns a copy of the definitions map or an empty map if nil.
 func (s *OpenAPISpec) GetDefinitions() map[string]Definition {
