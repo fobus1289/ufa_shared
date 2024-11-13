@@ -21,6 +21,7 @@ type Payload[U IUser[T, E, K], T, E, K any] struct {
 type JwtService[U IUser[T, E, K], T, E, K any] interface {
 	ParseToken(string) (U, error)
 	ParseTokenWithExpired(string) (U, error)
+	ParseTokenWithGracePeriod(token string, grace int64) (U, error)
 	Token(U) (string, error)
 	Config() JwtConfig
 }
@@ -52,6 +53,23 @@ func (j *jwtService[U, T, E, K]) ParseTokenWithExpired(token string) (U, error) 
 			return none, err
 		}
 	}
+	return payload.User, nil
+}
+
+func (j *jwtService[U, T, E, K]) ParseTokenWithGracePeriod(token string, grace int64) (U, error) {
+	payload, err := Decode[U](token, j.config.Secret, true)
+	{
+		if err != nil {
+			var none U
+			return none, err
+		}
+	}
+
+	if payload.ExpiresAt.Add(time.Duration(grace)*time.Minute).Compare(time.Now()) >= 0 {
+		var none U
+		return none, errors.New("token expired")
+	}
+
 	return payload.User, nil
 }
 

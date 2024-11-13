@@ -84,3 +84,7 @@ func (a *AuthEchoMiddleware[U, T, E, K]) ParseToken(token string) (U, error) {
 func (a *AuthEchoMiddleware[U, T, E, K]) ParseTokenWithExpired(token string) (U, error) {
 	return a.jwtService.ParseTokenWithExpired(token)
 }
+
+func (a *AuthEchoMiddleware[U, T, E, K]) ParseTokenWithGracePeriod(token string, grace int64) (U, error) {
+	return a.jwtService.ParseTokenWithGracePeriod(token, grace)
+}
