@@ -66,3 +66,6 @@ func (r *response) Conflict(res any) error { return r.Send(http.StatusConflict, 
 
 // Method for sending a response with a 501 Not Implemented status code
 func (r *response) NotImplemented() error { return r.Send(http.StatusNotImplemented, nil) }
+
+// Method for sending a response with a 501 Not Implemented status code
+func (r *response) SessionExpired() error { return r.Send(419, nil) }

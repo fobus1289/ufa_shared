@@ -16,6 +16,7 @@ type HttpError interface {
 	Unauthorized() error
 	InternalServerError() error
 	NotImplemented() error
+	SessionExpired() error
 }
 
 type httpError struct {
@@ -64,6 +65,11 @@ func (h *httpError) Conflict() error {
 
 func (h *httpError) NotImplemented() error {
 	h.status = http.StatusNotImplemented
+	return h.Send(h.err)
+}
+
+func (h *httpError) SessionExpired() error {
+	h.status = 419
 	return h.Send(h.err)
 }
 
