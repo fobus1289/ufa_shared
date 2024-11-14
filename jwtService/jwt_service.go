@@ -65,7 +65,7 @@ func (j *jwtService[U, T, E, K]) ParseTokenWithGracePeriod(token string, grace i
 		}
 	}
 
-	if payload.ExpiresAt.Add(time.Duration(grace)*time.Minute).Compare(time.Now()) >= 0 {
+	if payload.ExpiresAt.Add(time.Duration(grace) * time.Minute).Before(time.Now()) {
 		var none U
 		return none, errors.New("token expired")
 	}
