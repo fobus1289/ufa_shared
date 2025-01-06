@@ -124,7 +124,7 @@ func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 // @Summary      GetContent all {{ $serviceNameWithSpace }} with pagination
 // @Description  GetContent all {{ $serviceNameWithSpace }} with pagination
 // @Tags 		 {{ $serviceNameSc }}
-// @ID           get-all-{{ $serviceNameKc }}
+// @ID           search-{{ $serviceNameKc }}
 // @Accept       json
 // @Produce      json
 // @Param        search query string false "Searching by name or description"

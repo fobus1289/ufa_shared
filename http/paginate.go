@@ -6,6 +6,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	DefaultPerPageMinValue = 10
+	DefaultPerPageMaxValue = 50
+)
+
 type Paginate struct{ page, perpage int }
 
 func NewPaginate(page, perPage string) *Paginate {
@@ -42,9 +47,9 @@ func transformPerPage(perPage string) int {
 	value, err := strconv.ParseInt(perPage, 10, 32)
 	{
 		if err != nil || value < 1 {
-			value = 10
-		} else if value > 25 {
-			value = 25
+			value = DefaultPerPageMinValue
+		} else if value > DefaultPerPageMinValue {
+			value = DefaultPerPageMaxValue
 		}
 	}
 
