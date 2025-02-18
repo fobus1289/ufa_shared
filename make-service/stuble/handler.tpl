@@ -11,7 +11,7 @@ package handler
 {{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
 
 import (
-	_ "github.com/fobus1289/ufa_shared/http/response"
+	_ "github.com/fobus1289/ufa_shared/http/responsearchse"
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/http/validator"
 	"github.com/labstack/echo/v4"
@@ -84,11 +84,12 @@ func (e *{{ $serviceNameLc }}Handler) Create(c echo.Context) error {
 // @Param        page query string false "Page number" default(1)
 // @Param        perpage query string false "Number of items per page" default(10)
 // @Param        search query string false "Searching by name or description"
-// @Success      200 {object} response.ID "Successful operation"
+// @Success      200 {object} dto.Page{{ $serviceNameUc }}ResponseType "Successful operation"
 // @Failure      400 {object} response.ErrorResponse "Bad request"
 // @Failure      500 {object} response.ErrorResponse "Internal server error"
 // @Router       /{{ $serviceNameSc }}/page [get]
 func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
+	
 	var (
 	    search   = c.QueryParam("search")
 		page     = c.QueryParam("page")
@@ -127,20 +128,29 @@ func (e *{{ $serviceNameLc }}Handler) Page(c echo.Context) error {
 // @ID           search-{{ $serviceNameKc }}
 // @Accept       json
 // @Produce      json
-// @Param        search query string false "Searching by name or description"
+// @Param        {{ $serviceNameSc }}_query_params query dto.{{ $serviceNameUc }}QueryParams false "Searching by params"
 // @Param        limit  query int    false "Limit the number of results" default(20)
-// @Success      200 {object} response.ID "Successful operation"
+// @Success      200 {object} []model.{{ $serviceNameUc }}Model "Successful operation"
 // @Failure      400 {object} response.ErrorResponse "Bad request"
 // @Failure      500 {object} response.ErrorResponse "Internal server error"
 // @Router       /{{ $serviceNameSc }}/search [get]
 func (e *{{ $serviceNameLc }}Handler) Search(c echo.Context) error {
-	const defaultLimit = 15
-	const maxLimit = 100
 	
-	search := strings.TrimSpace(c.QueryParam("search"))
-	ctx := c.Request().Context()
+	const (
+		defaultLimit = 15
+	 	maxLimit = 100
+	)
 
-	limitParam := c.QueryParam("limit")
+	var (
+		params dto.{{ $serviceNameUc }}QueryParams 
+		ctx = c.Request().Context()
+		limitParam = c.QueryParam("limit")
+	)
+
+	if err := c.Bind(&params); err != nil {
+		return http.HTTPError(err).BadRequest()
+	}
+	
 	limit, err := strconv.Atoi(limitParam)
 	{
 		if err != nil || limit <= 0 {
@@ -162,8 +172,10 @@ func (e *{{ $serviceNameLc }}Handler) Search(c echo.Context) error {
 	}
 
 	searchData, err := e.service.Find(ctx, filter)
-	if err != nil {
-		return http.HTTPError(err).BadRequest()
+	{
+		if err != nil {
+			return http.HTTPError(err).BadRequest()
+		}
 	}
 
 	return http.Response(c).OK(searchData)

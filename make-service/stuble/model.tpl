@@ -20,7 +20,7 @@ type {{ $serviceNameUc }}Model struct {
 	CreatedAt *time.Time        `json:"createdAt" gorm:"autoCreateTime:true"`
 	UpdatedAt *time.Time        `json:"updatedAt,omitempty" gorm:"autoUpdateTime:true"`
 	DeletedAt *gorm.DeletedAt   `json:"-" swaggerignore:"true"`
-}
+} //@name {{ $serviceNameUc }}Model
 
 func ({{ $serviceNameUc }}Model) TableName() string {
 	return "{{ $serviceNameSc }}s"
