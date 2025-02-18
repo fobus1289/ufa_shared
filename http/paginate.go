@@ -48,7 +48,7 @@ func transformPerPage(perPage string) int {
 	{
 		if err != nil || value < 1 {
 			value = DefaultPerPageMinValue
-		} else if value > DefaultPerPageMinValue {
+		} else if value > DefaultPerPageMaxValue {
 			value = DefaultPerPageMaxValue
 		}
 	}
