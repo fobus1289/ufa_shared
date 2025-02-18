@@ -79,10 +79,14 @@ func (s *{{ $serviceNameLcWithService }}) Find(ctx context.Context, scopes ...Se
 func (s *{{ $serviceNameLcWithService }}) Page(ctx context.Context, take int, filter, limitFilter ServiceScope) (*dto.Page{{ $serviceNameUc }}ResponseType, error) {
 
 	tx := s.ModelWithContext(ctx)
+	{
+		// TODO: add joins in here!
+		tx = tx.Scopes(filter)
+	}
 
 	var total int64
 	{
-		txTotal := tx.Scopes(filter).Count(&total)
+		txTotal := tx.Count(&total)
 		if err := txTotal.Error; err != nil {
 			return nil, err
 		}
@@ -90,7 +94,7 @@ func (s *{{ $serviceNameLcWithService }}) Page(ctx context.Context, take int, fi
 
     var {{ $serviceNameLc }}s []*model.{{ $serviceNameUc }}Model
 	{
-		if err := tx.Scopes(filter, limitFilter).
+		if err := tx.Scopes(limitFilter).
 			Find(&{{ $serviceNameLc }}s).Error; err != nil {
 			return nil, err
 		}

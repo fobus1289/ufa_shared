@@ -22,3 +22,21 @@ type Create{{ $serviceNameUc }}Dto struct {
 type Update{{ $serviceNameUc }}Dto struct {
     Name *string `json:"name"`
 } //@name Update{{ $serviceNameUc }}Dto
+
+type {{ $serviceNameUc }}QueryParams struct {
+    Name *string `query:"name"`
+} //@name {{ $serviceNameUc }}QueryParams
+
+/*
+func (j *YourDtoName) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	}
+	return json.Unmarshal(bytes, &j)
+}
+
+func (j YourDtoName) Value() (driver.Value, error) {
+	return json.RawMessage(nil).MarshalJSON()
+}
+*/
