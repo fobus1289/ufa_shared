@@ -11,7 +11,7 @@ package handler
 {{ $serviceNameLcWithService:= toLowerCamel $serviceNameScWithService }}
 
 import (
-	_ "github.com/fobus1289/ufa_shared/http/responsearchse"
+	_ "github.com/fobus1289/ufa_shared/http/response"
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/http/validator"
 	"github.com/labstack/echo/v4"
@@ -162,11 +162,11 @@ func (e *{{ $serviceNameLc }}Handler) Search(c echo.Context) error {
 	}
 
 	filter := func(tx *gorm.DB) *gorm.DB {
+		
 		tx = tx.Where("is_visible = ?", true)
-
-		if search != "" {
-			searchTerm := fmt.Sprintf("%%%s%%", search)
-			tx = tx.Where("name ILIKE ?", searchTerm)
+		if params.Name != nil {
+			name := fmt.Sprintf("%%%s%%", *params.Name)
+			tx = tx.Where("{{ $serviceNameSc }}s.name ILIKE ?", name)
 		}
 		return tx.Limit(limit)
 	}
