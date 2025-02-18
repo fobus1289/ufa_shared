@@ -175,7 +175,7 @@ func parseTime(dateTime string) (*time.Time, error) {
 		}
 		return &timeFormatted, nil
 	}
-	return nil, errors.New(fmt.Sprintf("invalid date time: %s", dateTime))
+	return nil, fmt.Errorf("invalid date time: %s", dateTime)
 }
 
 func convertVal(t reflect.Type, val string) (any, error) {
