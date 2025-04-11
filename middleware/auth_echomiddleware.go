@@ -56,7 +56,7 @@ func (a *AuthEchoMiddleware[U, T, E, K]) BuildMiddleware(permissions ...K) echo.
 			}
 
 			if err := user.Pre(ctx.(T), a.storage, permissions...); err != nil {
-				return http.HTTPError(err).Unauthorized()
+				return http.HTTPError(err).Forbidden()
 			}
 
 			return next(ctx)
