@@ -12,6 +12,11 @@ type RedisService interface {
 	SetWithTTL(key int64, value any, timeOut time.Duration) error
 	Set(key int64, value any) error
 	Get(key int64) (any, error)
+
+	SetStringWithTTL(key string, value any, timeOut time.Duration) error
+	SetString(key string, value any) error
+	GetString(key string) (any, error)
+	DeleteString(key string) error
 }
 
 type redisService struct {
@@ -58,4 +63,34 @@ func (s *redisService) Get(key int64) (any, error) {
 	}
 
 	return val, nil
+}
+
+func (s *redisService) SetStringWithTTL(key string, value any, timeOut time.Duration) error {
+	status := s.redisClient.Set(context.Background(), key, value, timeOut)
+	if status.Err() != nil {
+		return status.Err()
+	}
+	return nil
+}
+
+func (s *redisService) SetString(key string, value any) error {
+	err := s.SetStringWithTTL(key, value, 0)
+	return err
+}
+
+func (s *redisService) GetString(key string) (any, error) {
+	val, err := s.redisClient.Get(context.Background(), key).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
+}
+
+func (s *redisService) DeleteString(key string) error {
+	status := s.redisClient.Del(context.Background(), key)
+	if status.Err() != nil {
+		return status.Err()
+	}
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/jwtService"
 	"github.com/fobus1289/ufa_shared/redis"
-	"github.com/fobus1289/ufa_shared/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -82,14 +81,7 @@ func (a *AuthEchoMiddleware[U, T, E, K]) BuildMiddleware(permissions ...K) echo.
 				}
 			}
 
-			tokenInt, err := utils.StringToInt64(token)
-			{
-				if err != nil {
-					return http.HTTPError(err).Unauthorized()
-				}
-			}
-
-			exists, err := a.redisService.Get(tokenInt)
+			exists, err := a.redisService.GetString(token)
 			{
 				if exists != nil {
 					return http.HTTPError(err).SessionExpired()
