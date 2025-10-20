@@ -50,3 +50,4 @@ func AuthorizationToken(c echo.Context) (string, error) {
 
 	return token, nil
 }
+

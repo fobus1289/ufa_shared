@@ -4,6 +4,7 @@ import (
 	"github.com/fobus1289/ufa_shared/http"
 	"github.com/fobus1289/ufa_shared/jwtService"
 	"github.com/fobus1289/ufa_shared/redis"
+	"github.com/fobus1289/ufa_shared/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -38,6 +39,32 @@ func NewAuthEchoMiddleware[U jwtService.IUser[T, E, K], T echo.Context, E, K any
 	return &authEchoMiddleware
 }
 
+// func (a *AuthEchoMiddleware[U, T, E, K]) BuildMiddleware(permissions ...K) echo.MiddlewareFunc {
+// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(ctx echo.Context) error {
+// 			token, err := AuthorizationToken(ctx)
+// 			{
+// 				if err != nil {
+// 					return http.HTTPError(err).Unauthorized()
+// 				}
+// 			}
+
+// 			user, err := a.jwtService.ParseTokenWithExpired(token)
+// 			{
+// 				if err != nil {
+// 					return http.HTTPError(err).Unauthorized()
+// 				}
+// 			}
+
+// 			if err := user.Pre(ctx.(T), a.storage, permissions...); err != nil {
+// 				return http.HTTPError(err).Forbidden()
+// 			}
+
+// 			return next(ctx)
+// 		}
+// 	}
+// }
+
 func (a *AuthEchoMiddleware[U, T, E, K]) BuildMiddleware(permissions ...K) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
@@ -52,6 +79,20 @@ func (a *AuthEchoMiddleware[U, T, E, K]) BuildMiddleware(permissions ...K) echo.
 			{
 				if err != nil {
 					return http.HTTPError(err).Unauthorized()
+				}
+			}
+
+			tokenInt, err := utils.StringToInt64(token)
+			{
+				if err != nil {
+					return http.HTTPError(err).Unauthorized()
+				}
+			}
+
+			exists, err := a.redisService.Get(tokenInt)
+			{
+				if exists != nil {
+					return http.HTTPError(err).SessionExpired()
 				}
 			}
 
