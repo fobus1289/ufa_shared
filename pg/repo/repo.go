@@ -13,8 +13,9 @@ type where = func(tx *gorm.DB) *gorm.DB
 func Page[T, M any](db *gorm.DB, paginate *http.Paginate, scopes ...where) (*response.PaginateResponse[T], error) {
 
 	type PageEntity[T any] struct {
-		Total int64
-		Data  T `gorm:"embedded"`
+		TotalCount int64 `gorm:"column:total_count"`
+		Total      int64 `gorm:"column:total"`
+		Data       T     `gorm:"embedded"`
 	}
 
 	var pageEntities []PageEntity[T]
@@ -22,6 +23,7 @@ func Page[T, M any](db *gorm.DB, paginate *http.Paginate, scopes ...where) (*res
 		scopes = append(scopes, func(tx *gorm.DB) *gorm.DB {
 			tx.Statement.Selects = append(
 				tx.Statement.Selects,
+				"COUNT(1) OVER() AS total_count",
 				fmt.Sprintf("CEIL(COUNT(1) OVER() / %f) AS total", float32(paginate.Take())),
 			)
 			return tx
@@ -46,6 +48,14 @@ func Page[T, M any](db *gorm.DB, paginate *http.Paginate, scopes ...where) (*res
 		}
 	}
 
+	var totalCount int64
+	{
+		if len(pageEntities) > 0 {
+			pageEntity := pageEntities[0]
+			totalCount = pageEntity.TotalCount
+		}
+	}
+
 	var entities = make([]T, 0, len(pageEntities))
 	{
 		for _, pageEntity := range pageEntities {
@@ -53,5 +63,5 @@ func Page[T, M any](db *gorm.DB, paginate *http.Paginate, scopes ...where) (*res
 		}
 	}
 
-	return response.NewPaginateResponse(totalPages, entities), nil
+	return response.NewPaginateResponse(totalCount, totalPages, entities), nil
 }
